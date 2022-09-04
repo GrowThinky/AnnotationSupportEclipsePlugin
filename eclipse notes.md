@@ -277,9 +277,6 @@
     
     [https://wiki.eclipse.org/FAQ_What_is_the_Java_model%3F](https://wiki.eclipse.org/FAQ_What_is_the_Java_model%3F)
     
-
-Current Microscope: 
-
 - Interface JavaFoldingStructureProvider  
     
     ### org.eclipse.jdt.ui.text.folding.IJavaFoldingStructureProvider
@@ -406,6 +403,8 @@ String Editing:
     
     is all the things you can see on an Eclipse window, there are multiple pages if you have used several perspectives. Normally you use SWT controls in the page and there will be an active page. Or if a dialog is displayed you schedule work to run after the dialog closes and the page is active again
     
+
+![RelevantClasses.png](eclipse%20plug-in%20dev%20e0662bbfb4de41dcb2a5dfb05eb1d3d3/RelevantClasses.png)
 
 - Document
     
