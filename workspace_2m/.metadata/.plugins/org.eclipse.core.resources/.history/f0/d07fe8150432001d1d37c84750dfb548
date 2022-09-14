@@ -1,0 +1,7 @@
+package javafoldingstructureprovider;
+
+import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
+
+public class MyAdaptedSourceViewer extends CompilationUnitEditor.AdaptedSourceViewer {
+
+}

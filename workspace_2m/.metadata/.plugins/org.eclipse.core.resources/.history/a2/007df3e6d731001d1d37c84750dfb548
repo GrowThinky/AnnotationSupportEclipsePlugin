@@ -1,0 +1,5 @@
+package javafoldingstructureprovider;
+
+public class MyCompilationUnitEditor extends CompilationUnitEditor {
+
+}

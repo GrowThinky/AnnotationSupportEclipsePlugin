@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config date="1662899397266" transient="false" version="3.0">
+<site enabled="true" policy="USER-EXCLUDE" updateable="true" url="platform:/base/">
+<feature id="org.eclipse.help" plugin-identifier="org.eclipse.help.base" url="features/org.eclipse.help_2.3.1000.v20220607-0700/" version="2.3.1000.v20220607-0700">
+</feature>
+<feature id="org.eclipse.pde" url="features/org.eclipse.pde_3.14.1200.v20220607-0700/" version="3.14.1200.v20220607-0700">
+</feature>
+<feature id="org.eclipse.emf.databinding.edit.source" url="features/org.eclipse.emf.databinding.edit.source_1.9.0.v20210924-1718/" version="1.9.0.v20210924-1718">
+</feature>
+<feature id="org.eclipse.equinox.p2.core.feature.source" url="features/org.eclipse.equinox.p2.core.feature.source_1.6.1400.v20220518-1326/" version="1.6.1400.v20220518-1326">
+</feature>
+<feature id="org.eclipse.ecf.filetransfer.httpclient5.feature" url="features/org.eclipse.ecf.filetransfer.httpclient5.feature_1.1.600.v20220215-0126/" version="1.1.600.v20220215-0126">
+</feature>
+<feature id="org.eclipse.help.source" url="features/org.eclipse.help.source_2.3.1000.v20220607-0700/" version="2.3.1000.v20220607-0700">
+</feature>
+<feature id="org.eclipse.emf.databinding.source" url="features/org.eclipse.emf.databinding.source_1.9.0.v20220516-1117/" version="1.9.0.v20220516-1117">
+</feature>
+<feature id="org.eclipse.sdk" url="features/org.eclipse.sdk_4.24.0.v20220607-0700/" version="4.24.0.v20220607-0700">
+</feature>
+<feature id="org.eclipse.jdt" url="features/org.eclipse.jdt_3.18.1200.v20220607-0700/" version="3.18.1200.v20220607-0700">
+</feature>
+<feature id="org.eclipse.emf.common" url="features/org.eclipse.emf.common_2.26.0.v20220325-0806/" version="2.26.0.v20220325-0806">
+</feature>
+<feature id="org.eclipse.equinox.p2.core.feature" url="features/org.eclipse.equinox.p2.core.feature_1.6.1400.v20220518-1326/" version="1.6.1400.v20220518-1326">
+</feature>
+<feature id="org.eclipse.rcp.source" url="features/org.eclipse.rcp.source_4.24.0.v20220607-0700/" version="4.24.0.v20220607-0700">
+</feature>
+<feature id="org.eclipse.platform.source" url="features/org.eclipse.platform.source_4.24.0.v20220607-0700/" version="4.24.0.v20220607-0700">
+</feature>
+<feature id="org.eclipse.ecf.core.ssl.feature" url="features/org.eclipse.ecf.core.ssl.feature_1.1.501.v20210409-2301/" version="1.1.501.v20210409-2301">
+</feature>
+<feature id="org.eclipse.ecf.filetransfer.httpclient5.feature.source" url="features/org.eclipse.ecf.filetransfer.httpclient5.feature.source_1.1.600.v20220215-0126/" version="1.1.600.v20220215-0126">
+</feature>
+<feature id="org.eclipse.ecf.filetransfer.ssl.feature" url="features/org.eclipse.ecf.filetransfer.ssl.feature_1.1.401.v20210409-2301/" version="1.1.401.v20210409-2301">
+</feature>
+<feature id="org.eclipse.ecf.core.ssl.feature.source" url="features/org.eclipse.ecf.core.ssl.feature.source_1.1.501.v20210409-2301/" version="1.1.501.v20210409-2301">
+</feature>
+<feature id="org.eclipse.pde.source" url="features/org.eclipse.pde.source_3.14.1200.v20220607-0700/" version="3.14.1200.v20220607-0700">
+</feature>
+<feature id="org.eclipse.ecf.core.feature.source" url="features/org.eclipse.ecf.core.feature.source_1.6.1.v20211005-1944/" version="1.6.1.v20211005-1944">
+</feature>
+<feature id="org.eclipse.emf.edit" url="features/org.eclipse.emf.edit_2.18.0.v20220201-1551/" version="2.18.0.v20220201-1551">
+</feature>
+<feature id="org.eclipse.equinox.p2.user.ui.source" url="features/org.eclipse.equinox.p2.user.ui.source_2.4.1600.v20220518-1326/" version="2.4.1600.v20220518-1326">
+</feature>
+<feature id="org.eclipse.emf.ecore" url="features/org.eclipse.emf.ecore_2.28.0.v20220426-0617/" version="2.28.0.v20220426-0617">
+</feature>
+<feature id="org.eclipse.equinox.p2.user.ui" url="features/org.eclipse.equinox.p2.user.ui_2.4.1600.v20220518-1326/" version="2.4.1600.v20220518-1326">
+</feature>
+<feature id="org.eclipse.tips.feature" url="features/org.eclipse.tips.feature_0.2.1700.v20220220-0850/" version="0.2.1700.v20220220-0850">
+</feature>
+<feature id="org.eclipse.equinox.p2.extras.feature" url="features/org.eclipse.equinox.p2.extras.feature_1.4.1600.v20220518-1326/" version="1.4.1600.v20220518-1326">
+</feature>
+<feature id="org.eclipse.equinox.p2.extras.feature.source" url="features/org.eclipse.equinox.p2.extras.feature.source_1.4.1600.v20220518-1326/" version="1.4.1600.v20220518-1326">
+</feature>
+<feature id="org.eclipse.emf.common.source" url="features/org.eclipse.emf.common.source_2.26.0.v20220325-0806/" version="2.26.0.v20220325-0806">
+</feature>
+<feature id="org.eclipse.emf.databinding.edit" url="features/org.eclipse.emf.databinding.edit_1.9.0.v20210924-1718/" version="1.9.0.v20210924-1718">
+</feature>
+<feature id="org.eclipse.ecf.filetransfer.ssl.feature.source" url="features/org.eclipse.ecf.filetransfer.ssl.feature.source_1.1.401.v20210409-2301/" version="1.1.401.v20210409-2301">
+</feature>
+<feature id="org.eclipse.emf.edit.source" url="features/org.eclipse.emf.edit.source_2.18.0.v20220201-1551/" version="2.18.0.v20220201-1551">
+</feature>
+<feature id="org.eclipse.jdt.source" url="features/org.eclipse.jdt.source_3.18.1200.v20220607-0700/" version="3.18.1200.v20220607-0700">
+</feature>
+<feature id="org.eclipse.ecf.filetransfer.feature.source" url="features/org.eclipse.ecf.filetransfer.feature.source_3.14.1800.v20220215-0126/" version="3.14.1800.v20220215-0126">
+</feature>
+<feature id="org.eclipse.e4.core.tools.feature.source" url="features/org.eclipse.e4.core.tools.feature.source_4.24.0.v20220420-0901/" version="4.24.0.v20220420-0901">
+</feature>
+<feature id="org.eclipse.ecf.core.feature" url="features/org.eclipse.ecf.core.feature_1.6.1.v20211005-1944/" version="1.6.1.v20211005-1944">
+</feature>
+<feature id="org.eclipse.rcp" url="features/org.eclipse.rcp_4.24.0.v20220607-0700/" version="4.24.0.v20220607-0700">
+</feature>
+<feature id="org.eclipse.equinox.p2.rcp.feature" url="features/org.eclipse.equinox.p2.rcp.feature_1.4.1600.v20220518-1326/" version="1.4.1600.v20220518-1326">
+</feature>
+<feature id="org.eclipse.ecf.filetransfer.feature" url="features/org.eclipse.ecf.filetransfer.feature_3.14.1800.v20220215-0126/" version="3.14.1800.v20220215-0126">
+</feature>
+<feature id="org.eclipse.platform" url="features/org.eclipse.platform_4.24.0.v20220607-0700/" version="4.24.0.v20220607-0700">
+</feature>
+<feature id="org.eclipse.emf.databinding" url="features/org.eclipse.emf.databinding_1.9.0.v20220516-1117/" version="1.9.0.v20220516-1117">
+</feature>
+<feature id="org.eclipse.tips.feature.source" url="features/org.eclipse.tips.feature.source_0.2.1700.v20220220-0850/" version="0.2.1700.v20220220-0850">
+</feature>
+<feature id="org.eclipse.e4.core.tools.feature" url="features/org.eclipse.e4.core.tools.feature_4.24.0.v20220420-0901/" version="4.24.0.v20220420-0901">
+</feature>
+<feature id="org.eclipse.equinox.p2.rcp.feature.source" url="features/org.eclipse.equinox.p2.rcp.feature.source_1.4.1600.v20220518-1326/" version="1.4.1600.v20220518-1326">
+</feature>
+<feature id="org.eclipse.e4.rcp.source" url="features/org.eclipse.e4.rcp.source_4.24.0.v20220530-1036/" version="4.24.0.v20220530-1036">
+</feature>
+<feature id="org.eclipse.e4.rcp" url="features/org.eclipse.e4.rcp_4.24.0.v20220530-1036/" version="4.24.0.v20220530-1036">
+</feature>
+<feature id="org.eclipse.emf.ecore.source" url="features/org.eclipse.emf.ecore.source_2.28.0.v20220426-0617/" version="2.28.0.v20220426-0617">
+</feature>
+</site>
+</config>

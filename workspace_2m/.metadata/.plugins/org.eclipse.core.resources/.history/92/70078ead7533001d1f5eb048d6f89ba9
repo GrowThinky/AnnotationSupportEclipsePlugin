@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.jdt.ui.foldingStructureProviders">
+      <provider
+            class="javafoldingstructureprovider.MyJavaFoldingStructureProvider1"
+            id="de.uni-marburg.pages.fb12.peaches.Myprovider1">
+      </provider>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="workbenchpreferencepage.WorkbenchPreferencePage1"
+            id="de.uni-marburg.pages.fb12.peaches.page1"
+            name="Annotation Folding">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="workbenchpreferencepage.AnnotationFoldingPrefInitializer">
+      </initializer>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="javafoldingstructureprovider.MyCompilationUnitEditor"
+            contributorClass="org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditorActionContributor"
+            default="false"
+            id="de.uni-marburg.pages.fb12.peaches.editor1"
+            name="name">
+      </editor>
+   </extension>
+
+</plugin>
