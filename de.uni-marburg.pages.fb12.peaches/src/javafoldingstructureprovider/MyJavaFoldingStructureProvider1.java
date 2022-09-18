@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -700,8 +702,12 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	private IJavaElement fInput;
 	private IElementChangedListener fElementListener;
 	
-	private int lineLengthOfAnnotation;
-	private int lengthOfAnnotation;
+	private int[] lineLengthOfAnnotation;
+	private int[] lengthOfAnnotation;
+	private ISourceRange[] rangeOfAnnotation;
+	private ISourceRange rangeOfMethod;
+	private int methodOffset; 
+	private int methodLength;
 
 	/* preferences */
 	private boolean fCollapseJavadoc= false;
@@ -1059,16 +1065,26 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 				// get info on method's Annotation (length and line number)
 				IAnnotatable method = (IAnnotatable) element;
 				IAnnotation[] annotations = method.getAnnotations();
+				ISourceReference m = (ISourceReference)(IMethod)element;
+				rangeOfMethod = m.getSourceRange();
+				System.out.println("range: "+ rangeOfMethod);
+				
 				
 				// reset annotation length information
-				lineLengthOfAnnotation = 0;
-				lengthOfAnnotation = 0;
+				lineLengthOfAnnotation = new int[annotations.length];
+				lengthOfAnnotation = new int[annotations.length];
+				rangeOfAnnotation = new ISourceRange[annotations.length];
+				
 				
 				for(int i = 0; i < annotations.length; i++) {
-					System.out.println( "anno +" + annotations[0].getSource().lines().count());
 					
-					lineLengthOfAnnotation = (int) annotations[0].getSource().lines().count();
-					lengthOfAnnotation = annotations[0].getSource().length();
+					lineLengthOfAnnotation[i] = (int) annotations[i].getSource().lines().count();
+					lengthOfAnnotation[i] = annotations[i].getSource().length();
+					rangeOfAnnotation[i] = annotations[i].getSourceRange();
+				}
+				if(annotations.length > 0) {
+				methodOffset = rangeOfMethod.getOffset()+ (rangeOfAnnotation[0].getOffset() - rangeOfMethod.getOffset()) + IntStream.of(lengthOfAnnotation).sum();
+				methodLength = rangeOfMethod.getLength()- IntStream.of(lengthOfAnnotation).sum();
 				}
 				
 				collapse= ctx.collapseMembers();
@@ -1170,7 +1186,6 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 
 				System.out.println("reference "+ reference.getSource());
 				System.out.println(range.getLength());
-			
 				
 				List<IRegion> regions= new ArrayList<>();
 				if (!ctx.hasFirstType() && reference instanceof IType) {
@@ -1213,25 +1228,39 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 					}
 
 					break;		
-				}
+				} 
 				
-				if (annotation) {
-						if (lineLengthOfAnnotation > 1) {
-							scanTilMethod(regions, scanner, range, start);
-							start = start + lengthOfAnnotation + 1;
+				if (annotation && lineLengthOfAnnotation[0] > 1) {
+					for (int i = 0; i < lengthOfAnnotation.length; i++) {
+						if (lineLengthOfAnnotation[i] > 1) {
+							//scanTilMethod(regions, scanner, range, start);
+							// calculate start of method below annotation
+							int prevStart = start+3;
+							start = start + (lengthOfAnnotation[i]-2);
 
 							System.out.println("count:"
 									+ (scanner.getLineNumber(start) + " " + scanner.getLineNumber(startOfAnnotation)));
 
-							// annotation region
-							regions.add(new Region(startOfAnnotation, (start - 2) - (startOfAnnotation)));
+							// add annotation region
+							//IRegion aligned = alignRegion(new Region(prevStart, (start) - (prevStart)),ctx);
+							IRegion aligned = alignRegion(new Region(rangeOfAnnotation[i].getOffset(), rangeOfAnnotation[i].getLength()-1),ctx);
+							regions.add(new Region(rangeOfAnnotation[i].getOffset(), rangeOfAnnotation[i].getLength()-1));
 							System.out.println("star: " + String.valueOf(scanner.getCurrentTokenSource()));
+							
+				
 						}
 					}
-				
+					int methodStart = 3+ rangeOfAnnotation[rangeOfAnnotation.length-1].getOffset()+ rangeOfAnnotation[rangeOfAnnotation.length-1].getLength();
+					int methodEnd = methodStart + (rangeOfMethod.getLength() - (methodStart - rangeOfMethod.getOffset()));
+					int methodLength = methodEnd - methodStart;//rangeOfMethod.getLength() - (startOfAnnotation - rangeOfMethod.getOffset()) ;
+					//regions.add(new Region(methodOffset, methodLength-1));
+					regions.add(new Region(methodStart, methodLength -2 ));
+				} else {
+
 				// method region
 				regions.add(new Region(start, shift + range.getLength() - start));
-
+				//regions.add(new Region(rangeOfMethod.getOffset(), rangeOfMethod.getLength()-1));
+				}
 				IRegion[] result = new IRegion[regions.size()];
 				regions.toArray(result);
 				return result;
