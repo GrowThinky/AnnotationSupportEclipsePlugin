@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Peaches
-Bundle-SymbolicName: de.uni-marburg.pages.fb12.peaches;singleton:=true
+Bundle-SymbolicName: de.pltlab.annotationFolding;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: de.uni.marburg.pages.fb12.peaches
 Bundle-RequiredExecutionEnvironment: JavaSE-17

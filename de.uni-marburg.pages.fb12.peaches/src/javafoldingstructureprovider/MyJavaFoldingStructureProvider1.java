@@ -702,6 +702,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	private IJavaElement fInput;
 	private IElementChangedListener fElementListener;
 	
+	private Boolean annotation; 
 	private int[] lineLengthOfAnnotation;
 	private int[] lengthOfAnnotation;
 	private ISourceRange[] rangeOfAnnotation;
@@ -884,7 +885,6 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	private void initializePreferences() {
 		
 		IPreferenceStore store = JavaPlugin.getDefault().getPreferenceStore();
-		System.out.println(store.getBoolean(PreferenceConstants.EDITOR_FOLDING_IMPORTS));
 		fCollapseInnerTypes= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_INNERTYPES);
 		fCollapseImportContainer= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_IMPORTS);
 		fCollapseJavadoc= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_JAVADOC);
@@ -894,14 +894,13 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
                 "de.uni-marburg.pages.fb12.peaches");
         boolean mySetting = scopedPreferenceStore.getBoolean("BOOLEAN_VALUE");
-        System.out.println("this one: " + String.valueOf(mySetting));
+        
 	}
 
 	private void update(FoldingStructureComputationContext ctx) {
 		if (ctx == null)
 			return;
 		
-		System.out.println("hello :) ");
 
 		Map<JavaProjectionAnnotation, Position> additions= new HashMap<>();
 		List<JavaProjectionAnnotation> deletions= new ArrayList<>();
@@ -1004,8 +1003,6 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 			if(element instanceof IMethod) {
 				IAnnotatable method = (IAnnotatable) element;
 				IAnnotation[] annotations = method.getAnnotations();
-				if(annotations.length > 0)
-					System.out.println( "anno +" + annotations[0].getSource().lines().count());
 			}
 			
 			computeFoldingStructure(element, ctx);
@@ -1043,10 +1040,13 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	})
 	protected void computeFoldingStructure(IJavaElement element, FoldingStructureComputationContext ctx) throws JavaModelException {
 
+		
 		boolean collapse= false;
 		boolean collapseCode= true;
-		System.out.println(element.getElementType());
+		annotation = false; 
 		
+		
+		System.out.println(element.getElementType());
 		
 		
 		switch (element.getElementType()) {
@@ -1067,26 +1067,27 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 				IAnnotation[] annotations = method.getAnnotations();
 				ISourceReference m = (ISourceReference)(IMethod)element;
 				rangeOfMethod = m.getSourceRange();
-				System.out.println("range: "+ rangeOfMethod);
 				
 				
 				// reset annotation length information
 				lineLengthOfAnnotation = new int[annotations.length];
 				lengthOfAnnotation = new int[annotations.length];
 				rangeOfAnnotation = new ISourceRange[annotations.length];
-				
-				
-				for(int i = 0; i < annotations.length; i++) {
-					
-					lineLengthOfAnnotation[i] = (int) annotations[i].getSource().lines().count();
-					lengthOfAnnotation[i] = annotations[i].getSource().length();
-					rangeOfAnnotation[i] = annotations[i].getSourceRange();
+
+				if (annotations.length > 0) {
+					annotation = true;
+					for (int i = 0; i < annotations.length; i++) {
+						lineLengthOfAnnotation[i] = (int) annotations[i].getSource().lines().count();
+						lengthOfAnnotation[i] = annotations[i].getSource().length();
+						rangeOfAnnotation[i] = annotations[i].getSourceRange();
+					}
+
+					methodOffset = rangeOfMethod.getOffset()
+							+ (rangeOfAnnotation[0].getOffset() - rangeOfMethod.getOffset())
+							+ IntStream.of(lengthOfAnnotation).sum();
+					methodLength = rangeOfMethod.getLength() - IntStream.of(lengthOfAnnotation).sum();
 				}
-				if(annotations.length > 0) {
-				methodOffset = rangeOfMethod.getOffset()+ (rangeOfAnnotation[0].getOffset() - rangeOfMethod.getOffset()) + IntStream.of(lengthOfAnnotation).sum();
-				methodLength = rangeOfMethod.getLength()- IntStream.of(lengthOfAnnotation).sum();
-				}
-				
+
 				collapse= ctx.collapseMembers();
 				break;
 			case IJavaElement.FIELD:
@@ -1102,7 +1103,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 			// comments
 			for (int i= 0; i < regions.length - 1; i++) {
 				IRegion normalized= alignRegion(regions[i], ctx);
-				//IRegion normalized= regions[i];
+				
 				if (normalized != null) {
 					Position position= createCommentPosition(normalized);
 					if (position != null) {
@@ -1119,7 +1120,6 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 			// code
 			if (collapseCode) {
 				IRegion normalized= alignRegion(regions[regions.length - 1], ctx);
-				//IRegion normalized= regions[regions.length - 1];
 				if (normalized != null) {
 					Position position= element instanceof IMember ? createMemberPosition(normalized, (IMember) element) : createCommentPosition(normalized);
 					if (position != null)
@@ -1171,7 +1171,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	 * @return the regions to be folded
 	 */
 	protected final IRegion[] computeProjectionRanges(ISourceReference reference, FoldingStructureComputationContext ctx) {
-	    Boolean annotation = false; 
+
 	    int startOfAnnotation = 0;
 		try {
 				ISourceRange range = reference.getSourceRange();
@@ -1219,11 +1219,6 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 						}
 						case ITerminalSymbols.TokenNameCOMMENT_LINE:
 							continue;
-							
-						case ITerminalSymbols.TokenNameAT:{
-							annotation = true; 
-							startOfAnnotation = scanner.getCurrentTokenStartPosition();
-						}
 						
 					}
 
@@ -1231,35 +1226,30 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 				} 
 				
 				if (annotation && lineLengthOfAnnotation[0] > 1) {
+					// method with multiple line annotations  
 					for (int i = 0; i < lengthOfAnnotation.length; i++) {
 						if (lineLengthOfAnnotation[i] > 1) {
-							//scanTilMethod(regions, scanner, range, start);
+							
 							// calculate start of method below annotation
 							int prevStart = start+3;
 							start = start + (lengthOfAnnotation[i]-2);
 
-							System.out.println("count:"
-									+ (scanner.getLineNumber(start) + " " + scanner.getLineNumber(startOfAnnotation)));
-
 							// add annotation region
-							//IRegion aligned = alignRegion(new Region(prevStart, (start) - (prevStart)),ctx);
-							IRegion aligned = alignRegion(new Region(rangeOfAnnotation[i].getOffset(), rangeOfAnnotation[i].getLength()-1),ctx);
 							regions.add(new Region(rangeOfAnnotation[i].getOffset(), rangeOfAnnotation[i].getLength()-1));
-							System.out.println("star: " + String.valueOf(scanner.getCurrentTokenSource()));
 							
-				
 						}
 					}
-					int methodStart = 3+ rangeOfAnnotation[rangeOfAnnotation.length-1].getOffset()+ rangeOfAnnotation[rangeOfAnnotation.length-1].getLength();
+					// TODO: check if /n are included 
+					int methodStart = rangeOfAnnotation[rangeOfAnnotation.length-1].getOffset()+ rangeOfAnnotation[rangeOfAnnotation.length-1].getLength() + 3;
 					int methodEnd = methodStart + (rangeOfMethod.getLength() - (methodStart - rangeOfMethod.getOffset()));
-					int methodLength = methodEnd - methodStart;//rangeOfMethod.getLength() - (startOfAnnotation - rangeOfMethod.getOffset()) ;
-					//regions.add(new Region(methodOffset, methodLength-1));
+					int methodLength = methodEnd - methodStart;
+					
 					regions.add(new Region(methodStart, methodLength -2 ));
+					
 				} else {
-
-				// method region
+				// method without multiple line annotations
 				regions.add(new Region(start, shift + range.getLength() - start));
-				//regions.add(new Region(rangeOfMethod.getOffset(), rangeOfMethod.getLength()-1));
+				
 				}
 				IRegion[] result = new IRegion[regions.size()];
 				regions.toArray(result);
@@ -1288,7 +1278,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 			}
 		} catch (InvalidInputException e) {
 		}
-		System.out.println("star1: " + String.valueOf(scanner.getCurrentTokenSource())); 
+		
 		return start;
 	
 	}
