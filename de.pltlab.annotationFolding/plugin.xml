@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.jdt.ui.foldingStructureProviders">
+      <provider
+            class="javafoldingstructureprovider.MyJavaFoldingStructureProvider1"
+            id="de.pltlab.annotationFolding.MyJavaFoldingStructureProvider1">
+      </provider>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="workbenchpreferencepage.WorkbenchPreferencePage1"
+            id="de.pltlab.annotationFolding.page1"
+            name="Annotation Folding">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="workbenchpreferencepage.AnnotationFoldingPrefInitializer">
+      </initializer>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="javafoldingstructureprovider.MyCompilationUnitEditor"
+            default="false"
+            id="de.pltlab.annotationFolding.editor1"
+            name="MyFruityJavaEditor">
+         <contentTypeBinding
+               contentTypeId="org.eclipse.jdt.core.javaSource">
+         </contentTypeBinding>
+      </editor>
+   </extension>
+
+</plugin>
