@@ -651,6 +651,8 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		@Override
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
 			
+			ArrayList<String> toHide = new ArrayList<String>();
+			toHide.add("Unfinished");
 			IAnnotation[] annotations = new IAnnotation[0];
 			IRegion[] regions = null;
 			IAnnotatable method = (IAnnotatable) fMember;
@@ -664,11 +666,17 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 				for(int i = 0 ; i < annotations.length;i++) {
 					ISourceRange nameRange = annotations[i].getNameRange();
 					ISourceRange sourceRange = annotations[i].getSourceRange();
+					if(toHide.contains(annotations[i].getElementName())){
+						regions[i] = new Region(sourceRange.getOffset()-2 ,sourceRange.getLength()+2);	
+					} else {
+				
 					regions[i] = new Region(sourceRange.getOffset()+9 + nameRange.getLength()+1,sourceRange.getLength() - (nameRange.getLength()+1+9));	
+					}
 				}
 			
 				
 			} catch (JavaModelException e) {
+				
 			}
 			
 			return regions;
