@@ -633,11 +633,13 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	private static final class AnnotationPosition extends Position implements IProjectionPosition {
 
 		private IMember fMember;
+		boolean foldAll;
 
-		public AnnotationPosition(int offset, int length, IMember member) {
+		public AnnotationPosition(int offset, int length, IMember member, boolean foldAll) {
 			super(offset, length);
 			Assert.isNotNull(member);
 			fMember= member;
+			this.foldAll= foldAll;
 		}
 
 		public void setMember(IMember member) {
@@ -650,33 +652,50 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		 */
 		@Override
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
-			
+
 			ArrayList<String> toHide = new ArrayList<String>();
 			toHide.add("Unfinished");
 			IAnnotation[] annotations = new IAnnotation[0];
 			IRegion[] regions = null;
 			IAnnotatable method = (IAnnotatable) fMember;
+			
 			try {
+				
 				annotations = method.getAnnotations();
 				annotations[0].getSource();
-				
-				
+
 				regions = new IRegion[annotations.length];
 				
-				for(int i = 0 ; i < annotations.length;i++) {
-					ISourceRange nameRange = annotations[i].getNameRange();
-					ISourceRange sourceRange = annotations[i].getSourceRange();
-					if(toHide.contains(annotations[i].getElementName())){
-						regions[i] = new Region(sourceRange.getOffset()-2 ,sourceRange.getLength()+2);	
-					} else {
 				
-					regions[i] = new Region(sourceRange.getOffset()+9 + nameRange.getLength()+1,sourceRange.getLength() - (nameRange.getLength()+1+9));	
+				
+				if (foldAll) {
+					
+					int start = annotations[0].getSourceRange().getOffset();
+					//start = document.getLineOfOffset(start);
+					//start = document.getLineOffset(start);
+					int end = annotations[annotations.length-1].getSourceRange().getOffset() +  annotations[annotations.length-1].getSourceRange().getLength()+1;
+					//end = document.getLineOffset(end-1);
+					return  new IRegion[] { new Region(start,end -start)};
+						
+				} else {
+		
+					for (int i = 0; i < annotations.length; i++) {
+						ISourceRange nameRange = annotations[i].getNameRange();
+						ISourceRange sourceRange = annotations[i].getSourceRange();
+						if (toHide.contains(annotations[i].getElementName())) {
+							regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
+						} else {
+
+							regions[i] = new Region(sourceRange.getOffset() + 9 + nameRange.getLength() + 1,
+									sourceRange.getLength() - (nameRange.getLength() + 1 + 9));
+
+						}
 					}
+
 				}
-			
-				
+
 			} catch (JavaModelException e) {
-				
+
 			}
 			
 			return regions;
@@ -1176,7 +1195,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 						rangeOfAnnotation[i] = annotations[i].getSourceRange();
 					}
 					if(IntStream.of(lineLengthOfAnnotation).sum() > 1)
-						intAnnotation = 1;  
+						intAnnotation = 2;  
 
 					methodOffset = rangeOfMethod.getOffset()
 							+ (rangeOfAnnotation[0].getOffset() - rangeOfMethod.getOffset())
@@ -1198,7 +1217,6 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		
 		if (regions.length > 0) {
 			// comments
-			System.out.println("hey: "+ intAnnotation);
 			for (int i= 0; i < regions.length - (1+intAnnotation); i++) {
 				//IRegion normalized= alignRegion(regions[i], ctx);
 				IRegion normalized= regions[i];
@@ -1219,7 +1237,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 			}
 			// annotations	
 			if(annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
-				System.out.println("ho: ");
+			
 				addCombinedAnnotationRegion(element, ctx, regions);
 			}
 			
@@ -1238,12 +1256,14 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 
 	private void addCombinedAnnotationRegion(IJavaElement element, FoldingStructureComputationContext ctx,
 			IRegion[] regions) {
-			int i = regions.length -2;
-			IRegion normalized= alignRegion(regions[i], ctx);
-			//IRegion normalized= regions[i];
+			boolean foldAll = true;
+			for(int i= regions.length -3; i< regions.length -1;i++) {
+				
+				IRegion normalized= alignRegion(regions[i], ctx);
+				//IRegion normalized= regions[i];
 			
 			if (normalized != null) {
-				Position position= createAnnotationPosition(normalized,(IMember) element);
+				Position position= createAnnotationPosition(normalized,(IMember) element,foldAll);
 				if (position != null) {
 					boolean annotationCollapse;
 					if (i == 0 && (regions.length > 2 || ctx.hasHeaderComment()) && element == ctx.getFirstType()) {
@@ -1253,6 +1273,8 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 					}
 					ctx.addProjectionRange(new JavaProjectionAnnotation(annotationCollapse, element, true), position);
 				}
+			}
+			foldAll = false;
 			}
 	}
 
@@ -1352,13 +1374,12 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 					break;		
 				} 
 				
-			
-				
 				if (annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
 					
 				   // addMultipleAnnotationRanges(regions, start);
 					 
 					//TODO: hard-coded 3 - replace with number of annotations=/n ?
+					regions.add(new Region(rangeOfAnnotation[0].getOffset()-3, IntStream.of(lengthOfAnnotation).sum()+3));
 					regions.add(new Region(rangeOfAnnotation[0].getOffset(), IntStream.of(lengthOfAnnotation).sum()));
 					int methodStart = rangeOfAnnotation[rangeOfAnnotation.length-1].getOffset()+ rangeOfAnnotation[rangeOfAnnotation.length-1].getLength() + 3; 
 					int methodEnd = methodStart + (rangeOfMethod.getLength() - (methodStart - rangeOfMethod.getOffset()));
@@ -1496,8 +1517,8 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		return new JavaElementPosition(aligned.getOffset(), aligned.getLength(), member);
 	}
 	
-	protected final Position createAnnotationPosition(IRegion aligned, IMember member) {
-		return new AnnotationPosition(aligned.getOffset(), aligned.getLength(), member);
+	protected final Position createAnnotationPosition(IRegion aligned, IMember member,boolean foldAll) {
+		return new AnnotationPosition(aligned.getOffset(), aligned.getLength(), member,foldAll);
 	}
 
 	/**
