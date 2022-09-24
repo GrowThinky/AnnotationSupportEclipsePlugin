@@ -65,6 +65,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jdt.ui.text.folding.IJavaFoldingStructureProvider;
 import org.eclipse.jdt.ui.text.folding.IJavaFoldingStructureProviderExtension;
+import org.eclipse.jdt.internal.core.util.PublicScanner;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.actions.SelectionConverter;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
@@ -574,6 +575,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 			int firstLine= document.getLineOfOffset(offset);
 			int captionLine= document.getLineOfOffset(nameStart);
 			int lastLine= document.getLineOfOffset(offset + length);
+			
 
 			/* see comment above - adjust the caption line to be inside the
 			 * entire folded region, and rely on later element deltas to correct
@@ -634,12 +636,15 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 
 		private IMember fMember;
 		boolean foldAll;
+		FoldingStructureComputationContext ctx;
 
-		public AnnotationPosition(int offset, int length, IMember member, boolean foldAll) {
+		public AnnotationPosition(int offset, int length, IMember member, boolean foldAll,FoldingStructureComputationContext ctx ) {
 			super(offset, length);
 			Assert.isNotNull(member);
 			fMember= member;
 			this.foldAll= foldAll;
+			this.ctx = ctx;
+			
 		}
 
 		public void setMember(IMember member) {
@@ -658,19 +663,20 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 			IAnnotation[] annotations = new IAnnotation[0];
 			IRegion[] regions = null;
 			IAnnotatable method = (IAnnotatable) fMember;
+			int maxLength = 40;
 			
 			try {
 				
 				annotations = method.getAnnotations();
-				annotations[0].getSource();
-
 				regions = new IRegion[annotations.length];
 				
 				
 				
 				if (foldAll) {
-					
-					int start = annotations[0].getSourceRange().getOffset();
+					//TODO: make sure tab is detected and covered by Range. (here: -1 hardcoded) 
+					// why can't I use getLineOffset?
+					int start = annotations[0].getSourceRange().getOffset()-1; 
+
 					//start = document.getLineOfOffset(start);
 					//start = document.getLineOffset(start);
 					int end = annotations[annotations.length-1].getSourceRange().getOffset() +  annotations[annotations.length-1].getSourceRange().getLength()+1;
@@ -679,68 +685,83 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 						
 				} else {
 		
+					String source = fMember.getSource();
 					for (int i = 0; i < annotations.length; i++) {
-						ISourceRange nameRange = annotations[i].getNameRange();
-						ISourceRange sourceRange = annotations[i].getSourceRange();
-						if (toHide.contains(annotations[i].getElementName())) {
+						
+						IAnnotation annotation = annotations[i];
+						
+						System.out.println("offset"+annotation.getSourceRange().getOffset());
+						System.out.println("offset"+annotation.getSourceRange().getLength());
+						
+						ISourceRange nameRange = annotation.getNameRange();
+						ISourceRange sourceRange = annotation.getSourceRange();
+						int sourceEnd = sourceRange.getOffset()+sourceRange.getLength();
+						
+						int peekLength = 0;
+						
+						//IMemberValuePair[] a = annotation.getMemberValuePairs();
+						
+
+//						for (int j = 0; j < a.length; j++) {
+//							System.out.println(a[j].getMemberName());
+//
+//						}
+						
+						if(sourceRange.getLength() > maxLength) {
+							 peekLength = maxLength;
+					
+						
+						IScanner scanner =  ToolFactory.createScanner(true, false, false, true);
+						scanner.setSource(annotation.getSource().toCharArray());
+						//scanner.resetTo(sourceRange.getOffset(),sourceEnd );
+						int start = sourceRange.getOffset();
+						int cutOff =start;
+						
+						
+						System.out.println("dumbo"+ String.valueOf( scanner.getSource()));
+						ArrayList<Integer> wordEnd = new ArrayList();
+						
+						int token=-1;
+						// find token-end closest to peek cutoff
+						while (token != ITerminalSymbols.TokenNameEOF) {
+							 token = scanner.getNextToken();
+							 wordEnd.add(scanner.getCurrentTokenEndPosition());
+						}
+						scanner.setSource(null);
+						
+						for(int x : wordEnd) {
+							if(x > (peekLength)) {
+								peekLength = x+1;
+								break;
+							}
+							
+						}
+						}
+								
+							
+						if (toHide.contains(annotation.getElementName())) {
 							regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
 						} else {
+							if(peekLength != 0) {
+							regions[i] = new Region(sourceRange.getOffset() + peekLength ,
+								sourceRange.getLength() - ( + peekLength));
+							//regions[i] = new Region(cutOff, sourceEnd -cutOff);
 
-							regions[i] = new Region(sourceRange.getOffset() + 9 + nameRange.getLength() + 1,
-									sourceRange.getLength() - (nameRange.getLength() + 1 + 9));
-
+							} else {
+								//dummy region
+								regions[i]= new Region(sourceRange.getOffset() + sourceRange.getLength(),0 );
+							}
 						}
 					}
 
 				}
 
-			} catch (JavaModelException e) {
+			} catch (JavaModelException | InvalidInputException e) {
 
 			}
 			
 			return regions;
-			
-			
-			/*
-			DocumentCharacterIterator sequence= new DocumentCharacterIterator(document, offset, offset + length);
-			int prefixEnd= 0;
-			//int contentStart= findFirstContent(sequence, prefixEnd);
-
-			int firstLine= document.getLineOfOffset(offset + prefixEnd);
-			int captionLine= document.getLineOfOffset(offset );
-			int lastLine= document.getLineOfOffset(offset + length);
-
-
-			Assert.isTrue(firstLine <= captionLine, "first folded line is greater than the caption line"); //$NON-NLS-1$
-			Assert.isTrue(captionLine <= lastLine, "caption line is greater than the last folded line"); //$NON-NLS-1$
-
-			IRegion preRegion;
-			if (firstLine < captionLine) {
-//				preRegion= new Region(offset + prefixEnd, contentStart - prefixEnd);
-				int preOffset= document.getLineOffset(firstLine);
-				IRegion preEndLineInfo= document.getLineInformation(captionLine);
-				int preEnd= preEndLineInfo.getOffset();
-				preRegion= new Region(preOffset, preEnd - preOffset);
-			} else {
-				preRegion= null;
-			}
-
-			if (captionLine < lastLine) {
-				int postOffset= document.getLineOffset(captionLine + 1);
-				int postLength= offset + length - postOffset;
-				if (postLength > 0) {
-					IRegion postRegion= new Region(postOffset, postLength);
-					if (preRegion == null)
-						return new IRegion[] { postRegion };
-					return new IRegion[] { preRegion, postRegion };
-				}
-			}
-
-			if (preRegion != null)
-				return new IRegion[] { preRegion };
-
-			return null;
-		*/
+		
 		}
 
 		/*
@@ -1263,7 +1284,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 				//IRegion normalized= regions[i];
 			
 			if (normalized != null) {
-				Position position= createAnnotationPosition(normalized,(IMember) element,foldAll);
+				Position position= createAnnotationPosition(normalized,(IMember) element,foldAll, ctx);
 				if (position != null) {
 					boolean annotationCollapse;
 					if (i == 0 && (regions.length > 2 || ctx.hasHeaderComment()) && element == ctx.getFirstType()) {
@@ -1362,7 +1383,8 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 						case ITerminalSymbols.TokenNameCOMMENT_BLOCK: {
 						
 							int end= scanner.getCurrentTokenEndPosition() + 1;
-										
+							
+									
 							regions.add(new Region(start, end - start));
 							continue;
 						}
@@ -1517,8 +1539,8 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		return new JavaElementPosition(aligned.getOffset(), aligned.getLength(), member);
 	}
 	
-	protected final Position createAnnotationPosition(IRegion aligned, IMember member,boolean foldAll) {
-		return new AnnotationPosition(aligned.getOffset(), aligned.getLength(), member,foldAll);
+	protected final Position createAnnotationPosition(IRegion aligned, IMember member,boolean foldAll,FoldingStructureComputationContext ctx) {
+		return new AnnotationPosition(aligned.getOffset(), aligned.getLength(), member,foldAll,ctx);
 	}
 
 	/**
