@@ -34,7 +34,7 @@ import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
-
+import org.junit.validator.AnnotationsValidator;
 import org.eclipse.jdt.core.ElementChangedEvent;
 import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.IAnnotation;
@@ -664,6 +664,8 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 			IRegion[] regions = null;
 			IAnnotatable method = (IAnnotatable) fMember;
 			int maxLength = 40;
+			// ONSOM
+			int offSet = 0;
 			
 			try {
 				
@@ -672,16 +674,20 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 				
 				
 				
+				
 				if (foldAll) {
 					//TODO: make sure tab is detected and covered by Range. (here: -1 hardcoded) 
 					// why can't I use getLineOffset?
-					int start = annotations[0].getSourceRange().getOffset()-1; 
+					int start = annotations[0].getSourceRange().getOffset(); // -2 for multiple ... to change back. 
+					System.out.println("HELLO");
 
 					//start = document.getLineOfOffset(start);
 					//start = document.getLineOffset(start);
-					int end = annotations[annotations.length-1].getSourceRange().getOffset() +  annotations[annotations.length-1].getSourceRange().getLength()+1;
-					//end = document.getLineOffset(end-1);
-					return  new IRegion[] { new Region(start,end -start)};
+					int end = annotations[annotations.length-1].getSourceRange().getOffset() +  annotations[annotations.length-1].getSourceRange().getLength();
+					end = document.getLineOfOffset(end);
+					int endOffset = document.getLineOffset(end+1)-1;
+					System.out.println("END " + endOffset);
+					return  new IRegion[] { new Region(start,endOffset -start)};
 						
 				} else {
 		
@@ -849,6 +855,9 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	private boolean fCollapseMembers= false;
 	private boolean fCollapseHeaderComments= true;
 	private boolean complexAnnotationFolding = true; 
+	
+	private int numberOfAnnotationRanges=0;
+	
 
 	/* filters */
 	/** Member filter, matches nested members (but not top-level types). */
@@ -1179,7 +1188,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		boolean collapse= false;
 		boolean collapseCode= true;
 		annotation = false; 
-		int intAnnotation=0;
+		
 		
 		
 		System.out.println(element.getElementType());
@@ -1219,7 +1228,14 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 						rangeOfAnnotation[i] = annotations[i].getSourceRange();
 					}
 					if(IntStream.of(lineLengthOfAnnotation).sum() > 1)
-						intAnnotation = 2;  
+						
+						//OMSOM
+						if(complexAnnotationFolding) {
+							numberOfAnnotationRanges = 2;  
+						} else {
+							numberOfAnnotationRanges = 1;
+						}
+					
 
 					methodOffset = rangeOfMethod.getOffset()
 							+ (rangeOfAnnotation[0].getOffset() - rangeOfMethod.getOffset())
@@ -1241,7 +1257,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		
 		if (regions.length > 0) {
 			// comments
-			for (int i= 0; i < regions.length - (1+intAnnotation); i++) {
+			for (int i= 0; i < regions.length - (1+numberOfAnnotationRanges); i++) {
 				//IRegion normalized= alignRegion(regions[i], ctx);
 				IRegion normalized= regions[i];
 				
@@ -1281,7 +1297,10 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	private void addCombinedAnnotationRegion(IJavaElement element, FoldingStructureComputationContext ctx,
 			IRegion[] regions) {
 			boolean foldAll = true;
-			for(int i= regions.length -3; i< regions.length -1;i++) {
+			
+			//OMSOM
+			int limit = numberOfAnnotationRanges +1;
+			for(int i= regions.length -limit; i< regions.length -1;i++) {
 				
 				IRegion normalized= alignRegion(regions[i], ctx);
 				//IRegion normalized= regions[i];
@@ -1402,9 +1421,19 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 				if (annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
 					
 				   // addMultipleAnnotationRanges(regions, start);
-					 
-					//TODO: hard-coded 3 - replace with number of annotations=/n ?
-					regions.add(new Region(rangeOfAnnotation[0].getOffset()-3, IntStream.of(lengthOfAnnotation).sum()+3));
+					
+					//OMSOM:
+					if(complexAnnotationFolding) {
+						IDocument document = ctx.getDocument();
+						int aStart = document.getLineOfOffset(rangeOfAnnotation[0].getOffset());
+						aStart = document.getLineOffset(aStart-1);
+						
+						int aEnd = document.getLineOfOffset(rangeOfAnnotation[rangeOfAnnotation.length-1].getOffset()+lengthOfAnnotation[lengthOfAnnotation.length-1]);
+						aEnd = document.getLineOffset(aEnd);
+						
+						regions.add(new Region(aStart, aEnd - aStart));
+					}
+					
 					regions.add(new Region(rangeOfAnnotation[0].getOffset(), IntStream.of(lengthOfAnnotation).sum()));
 					int methodStart = rangeOfAnnotation[rangeOfAnnotation.length-1].getOffset()+ rangeOfAnnotation[rangeOfAnnotation.length-1].getLength() + 3; 
 					int methodEnd = methodStart + (rangeOfMethod.getLength() - (methodStart - rangeOfMethod.getOffset()));
@@ -1422,7 +1451,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 				IRegion[] result = new IRegion[regions.size()];
 				regions.toArray(result);
 				return result;
-		} catch (JavaModelException | InvalidInputException e) {
+		} catch (JavaModelException | InvalidInputException | BadLocationException e) {
 		}
 
 		return new IRegion[0];
