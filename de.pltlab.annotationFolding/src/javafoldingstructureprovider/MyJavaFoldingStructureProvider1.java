@@ -848,6 +848,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	private boolean fCollapseInnerTypes= true;
 	private boolean fCollapseMembers= false;
 	private boolean fCollapseHeaderComments= true;
+	private boolean complexAnnotationFolding = true; 
 
 	/* filters */
 	/** Member filter, matches nested members (but not top-level types). */
@@ -1024,8 +1025,10 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		fCollapseHeaderComments= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_HEADERS);
 		
 		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-                "de.uni-marburg.pages.fb12.peaches");
-        boolean mySetting = scopedPreferenceStore.getBoolean("BOOLEAN_VALUE");
+                "de.pltlab.annotationFolding");
+        complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
+        
+        
         
 	}
 

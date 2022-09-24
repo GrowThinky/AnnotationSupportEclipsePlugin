@@ -18,7 +18,7 @@ public class WorkbenchPreferencePage1 extends FieldEditorPreferencePage implemen
     }
 
     public void createFieldEditors() {
-        addField(new BooleanFieldEditor("BOOLEAN_VALUE", "&A boolean preference", getFieldEditorParent()));
+        addField(new BooleanFieldEditor("COMPLEX_ENABLED", "&Enable Complex Annotation Folding", getFieldEditorParent()));
 
         addField(new RadioGroupFieldEditor("CHOICE", "A &multiple-choice preference", 1,
                 new String[][] { { "&Choice 1", "choice1" }, { "C&hoice 2", "choice2" } }, getFieldEditorParent()));
@@ -28,7 +28,7 @@ public class WorkbenchPreferencePage1 extends FieldEditorPreferencePage implemen
     @Override
     public void init(IWorkbench workbench) {
         // second parameter is typically the plug-in id
-        setPreferenceStore(new ScopedPreferenceStore(InstanceScope.INSTANCE, "de.uni-marburg.pages.fb12.peaches"));
+        setPreferenceStore(new ScopedPreferenceStore(InstanceScope.INSTANCE, "de.pltlab.annotationFolding"));
         setDescription("Configure Annotation Folding Behavior");
     }
 
