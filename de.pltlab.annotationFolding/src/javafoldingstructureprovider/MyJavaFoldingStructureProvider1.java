@@ -637,6 +637,9 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		private IMember fMember;
 		boolean foldAll;
 		FoldingStructureComputationContext ctx;
+		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
+                "de.pltlab.annotationFolding");
+		String hide = scopedPreferenceStore.getString("TO_HIDE");
 
 		public AnnotationPosition(int offset, int length, IMember member, boolean foldAll,FoldingStructureComputationContext ctx ) {
 			super(offset, length);
@@ -657,9 +660,10 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 		 */
 		@Override
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
-
+			
+			
 			ArrayList<String> toHide = new ArrayList<String>();
-			toHide.add("Unfinished");
+			toHide.add(hide);
 			IAnnotation[] annotations = new IAnnotation[0];
 			IRegion[] regions = null;
 			IAnnotatable method = (IAnnotatable) fMember;
@@ -676,17 +680,14 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 				
 				
 				if (foldAll) {
-					//TODO: make sure tab is detected and covered by Range. (here: -1 hardcoded) 
-					// why can't I use getLineOffset?
+					
 					int start = annotations[0].getSourceRange().getOffset(); // -2 for multiple ... to change back. 
-					System.out.println("HELLO");
-
-					//start = document.getLineOfOffset(start);
-					//start = document.getLineOffset(start);
 					int end = annotations[annotations.length-1].getSourceRange().getOffset() +  annotations[annotations.length-1].getSourceRange().getLength();
 					end = document.getLineOfOffset(end);
-					int endOffset = document.getLineOffset(end+1)-1;
+					int endOffset = (document.getLineOffset(end+1))-1;
+					
 					System.out.println("END " + endOffset);
+					
 					return  new IRegion[] { new Region(start,endOffset -start)};
 						
 				} else {
@@ -704,14 +705,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 						int sourceEnd = sourceRange.getOffset()+sourceRange.getLength();
 						
 						int peekLength = 0;
-						
-						//IMemberValuePair[] a = annotation.getMemberValuePairs();
-						
 
-//						for (int j = 0; j < a.length; j++) {
-//							System.out.println(a[j].getMemberName());
-//
-//						}
 						
 						if(sourceRange.getLength() > maxLength) {
 							 peekLength = maxLength;
@@ -719,7 +713,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 						
 						IScanner scanner =  ToolFactory.createScanner(true, false, false, true);
 						scanner.setSource(annotation.getSource().toCharArray());
-						//scanner.resetTo(sourceRange.getOffset(),sourceEnd );
+						
 						int start = sourceRange.getOffset();
 						int cutOff =start;
 						
@@ -727,7 +721,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 						System.out.println("dumbo"+ String.valueOf( scanner.getSource()));
 						ArrayList<Integer> wordEnd = new ArrayList();
 						
-						int token=-1;
+						int token= -1;
 						// find token-end closest to peek cutoff
 						while (token != ITerminalSymbols.TokenNameEOF) {
 							 token = scanner.getNextToken();
