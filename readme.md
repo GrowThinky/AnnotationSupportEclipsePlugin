@@ -23,7 +23,7 @@ To try out:
 
 ## Examples
 
-´´´java
+```java
 @Documented
 @Constraint(validatedBy = { })
 @Target({ METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER })
@@ -32,4 +32,4 @@ To try out:
 
 // Which may be collapsed to..
 @Documented @Constraint(..) @Target(..) @NotNull @Size(..)
-´´´
+```
