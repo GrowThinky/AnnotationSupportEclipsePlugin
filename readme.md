@@ -32,5 +32,4 @@ To try out:
 
 // Which may be collapsed to..
 @Documented @Constraint(..) @Target(..) @NotNull @Size(..)
-}
 ´´´
