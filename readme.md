@@ -1,5 +1,5 @@
-AnnotationSupportEclipsePlugin
-==============================
+AnnotationFolding Eclipse IDE Plug-in
+=====================================
 
 Eclipse plug-in for folding @Annotations in Java Editor.
 
