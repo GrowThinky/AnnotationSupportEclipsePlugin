@@ -15,7 +15,7 @@ EPL License: http://www.eclipse.org/legal/epl-v20.html
 
 Update site: https://github.com/GrowThinky/AnnotationSupportEclipsePlugin
 
-# To try out:
+To try out:
 * Run the project de.pltlab.annotationFolding as an eclipse application.
 * Preferences->Java->Editor->Folding, select folding to use "de.pltlab.annotationFolding".
 * Any newly opened Java editor will pickup annotation folding.
