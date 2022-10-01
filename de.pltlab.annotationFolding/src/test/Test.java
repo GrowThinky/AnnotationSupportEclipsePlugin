@@ -1,9 +1,8 @@
 package test;
 
+
 import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.InputStream;
-
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
@@ -28,9 +27,9 @@ import org.junit.jupiter.api.Assertions;
 import org.eclipse.ui.*;
 import org.eclipse.ui.editors.text.TextEditor;
 
+@SuppressWarnings("restriction")
 class Test {
 
-	@SuppressWarnings("restriction")
 	@org.junit.jupiter.api.Test
 	void test() throws ExecutionException, CoreException, BadLocationException {
 
@@ -62,6 +61,7 @@ class Test {
 				viewer.collapseAll();
 				viewer.reinitializeProjection();
 				
+				projectionDocument = viewer.getProjectionTest();
 				foldedText = projectionDocument.get();
 				
 				Assertions.assertEquals(folded2,foldedText);			

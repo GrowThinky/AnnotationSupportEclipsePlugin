@@ -12,8 +12,8 @@ public class AnnotationFoldingPrefInitializer extends AbstractPreferenceInitiali
 
     @Override
     public void initializeDefaultPreferences() {
-        ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, "de.uni-marburg.pages.fb12.peaches");
-        scopedPreferenceStore.setDefault("BOOLEAN_VALUE", "false");
+        ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, "de.pltlab.annotationFolding");
+        scopedPreferenceStore.setDefault("COMPLEX_ENABLED", "false");
     }
 
 }
