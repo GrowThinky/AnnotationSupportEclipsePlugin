@@ -1,7 +1,0 @@
-package javafoldingstructureprovider;
-
-import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
-
-public class MyCompilationUnitEditor extends CompilationUnitEditor {
-
-}

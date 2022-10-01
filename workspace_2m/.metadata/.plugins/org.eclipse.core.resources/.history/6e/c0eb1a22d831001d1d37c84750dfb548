@@ -1,8 +1,0 @@
-package javafoldingstructureprovider;
-
-import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
-
-@SuppressWarnings("restriction")
-public class MyCompilationUnitEditor extends CompilationUnitEditor {
-
-}
