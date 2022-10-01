@@ -21,6 +21,7 @@ public class WorkbenchPreferencePage1 extends FieldEditorPreferencePage implemen
         addField(new BooleanFieldEditor("COMPLEX_ENABLED", "&Enable Complex Annotation Folding", getFieldEditorParent()));
 
         addField(new BooleanFieldEditor("FOLD_ARGUMENTS", "&Fold Arguments", getFieldEditorParent()));
+        addField(new BooleanFieldEditor("INITIAL_FOLD", "Collapse Annotations by &Default", getFieldEditorParent()));
         addField(new BooleanFieldEditor("HIDE_SELECTED", "Hide &Selected Annotations", getFieldEditorParent()));
        // addField(new RadioGroupFieldEditor("CHOICE", "A &multiple-choice preference", 1,
        //         new String[][] { { "&Fold Arguments", "choice1" }, { "&Hide Selected Annotations", "choice2" } }, getFieldEditorParent()));

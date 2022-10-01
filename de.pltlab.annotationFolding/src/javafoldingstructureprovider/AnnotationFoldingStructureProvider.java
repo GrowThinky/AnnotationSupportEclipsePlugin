@@ -222,6 +222,16 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		public boolean collapseMembers() {
 			return fAllowCollapsing && fCollapseMembers;
 		}
+		
+		/**
+		 * Returns <code>true</code> if annotations should be collapsed.
+		 *
+		 * @return <code>true</code> if annotations should be collapsed
+		 */
+		public boolean collapseAnnotations() {
+			return fAllowCollapsing && fCollapseAnnotations;
+		}
+	
 	}
 
 	/**
@@ -848,6 +858,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	private boolean fCollapseInnerTypes= true;
 	private boolean fCollapseMembers= false;
 	private boolean fCollapseHeaderComments= true;
+	private boolean fCollapseAnnotations= false;
 	private boolean complexAnnotationFolding = true; 
 	
 	private int numberOfAnnotationRanges=0;
@@ -1030,6 +1041,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
                 "de.pltlab.annotationFolding");
         complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
+        fCollapseAnnotations = scopedPreferenceStore.getBoolean("INITIAL_FOLD");
         
         
         
@@ -1201,7 +1213,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 				collapse= ctx.collapseInnerTypes() && collapseCode;
 				break;
 			case IJavaElement.METHOD:
-				// get info on method's Annotation (length and line number)
+				// get length and line number of method's Annotation 
 				IAnnotatable method = (IAnnotatable) element;
 				annotations = method.getAnnotations();
 				ISourceReference m = (ISourceReference)(IMethod)element;
@@ -1211,7 +1223,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 					annotation = true;
 					
 					
-					// reset annotation length information
+					// collect annotation length information
 					lineLengthOfAnnotation = new int[annotations.length];
 					lengthOfAnnotation = new int[annotations.length];
 					rangeOfAnnotation = new ISourceRange[annotations.length];
@@ -1221,20 +1233,22 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 						lengthOfAnnotation[i] = annotations[i].getSource().length();
 						rangeOfAnnotation[i] = annotations[i].getSourceRange();
 					}
-					if(IntStream.of(lineLengthOfAnnotation).sum() > 1)
+					
+					// check if complete method's annotations cover more than single line
+					if (IntStream.of(lineLengthOfAnnotation).sum() > 1) {
 						
-						//OMSOM
-						if(complexAnnotationFolding) {
-							numberOfAnnotationRanges = 2;  
+						if (complexAnnotationFolding) {
+							numberOfAnnotationRanges = 2;
 						} else {
 							numberOfAnnotationRanges = 1;
 						}
-					
 
-					methodOffset = rangeOfMethod.getOffset()
-							+ (rangeOfAnnotation[0].getOffset() - rangeOfMethod.getOffset())
-							+ IntStream.of(lengthOfAnnotation).sum();
-					methodLength = rangeOfMethod.getLength() - IntStream.of(lengthOfAnnotation).sum();
+						methodOffset = rangeOfMethod.getOffset()
+								+ (rangeOfAnnotation[0].getOffset() - rangeOfMethod.getOffset())
+								+ IntStream.of(lengthOfAnnotation).sum();
+						methodLength = rangeOfMethod.getLength() - IntStream.of(lengthOfAnnotation).sum();
+					}
+
 				}
 
 				collapse= ctx.collapseMembers();
@@ -1251,7 +1265,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		
 		if (regions.length > 0) {
 			// comments
-			for (int i= 0; i < regions.length - (1+numberOfAnnotationRanges); i++) {
+			for (int i= 0; i < regions.length - (numberOfAnnotationRanges + 1); i++) {
 				//IRegion normalized= alignRegion(regions[i], ctx);
 				IRegion normalized= regions[i];
 				
@@ -1271,7 +1285,6 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			}
 			// annotations	
 			if(annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
-			
 				addCombinedAnnotationRegion(element, ctx, regions);
 			}
 			
@@ -1290,29 +1303,24 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 	private void addCombinedAnnotationRegion(IJavaElement element, FoldingStructureComputationContext ctx,
 			IRegion[] regions) {
-			boolean foldAll = true;
-			
-			//OMSOM
-			int limit = numberOfAnnotationRanges +1;
-			for(int i= regions.length -limit; i< regions.length -1;i++) {
-				
-				IRegion normalized= alignRegion(regions[i], ctx);
-				//IRegion normalized= regions[i];
-			
+		boolean foldAll = true;
+
+		int numberOfNonAnnotationRanges = numberOfAnnotationRanges + 1; // +1 is member's range
+		for (int i = regions.length - numberOfNonAnnotationRanges; i < regions.length - 1; i++) {
+
+			IRegion normalized = alignRegion(regions[i], ctx);
+			// IRegion normalized= regions[i];
+
 			if (normalized != null) {
-				Position position= createAnnotationPosition(normalized,(IMember) element,foldAll, ctx);
+				Position position = createAnnotationPosition(normalized, (IMember) element, foldAll, ctx);
 				if (position != null) {
 					boolean annotationCollapse;
-					if (i == 0 && (regions.length > 2 || ctx.hasHeaderComment()) && element == ctx.getFirstType()) {
-						annotationCollapse= ctx.collapseHeaderComments(); // TODO: add annotation option
-					} else {
-						annotationCollapse= ctx.collapseJavadoc();
-					}
+					annotationCollapse = ctx.collapseAnnotations(); 
 					ctx.addProjectionRange(new JavaProjectionAnnotation(annotationCollapse, element, true), position);
 				}
 			}
 			foldAll = false;
-			}
+		}
 	}
 
 	/**

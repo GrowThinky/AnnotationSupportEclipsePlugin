@@ -14,6 +14,7 @@ public class AnnotationFoldingPrefInitializer extends AbstractPreferenceInitiali
     public void initializeDefaultPreferences() {
         ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, "de.pltlab.annotationFolding");
         scopedPreferenceStore.setDefault("COMPLEX_ENABLED", "false");
+        scopedPreferenceStore.setDefault("INITIAL_FOLD", "false");
     }
 
 }

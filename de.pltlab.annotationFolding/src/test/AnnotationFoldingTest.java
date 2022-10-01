@@ -32,8 +32,17 @@ class AnnotationFoldingTest {
 	@org.junit.jupiter.api.Test
 	void test() throws ExecutionException, CoreException, BadLocationException {
 
-		JavaEditor editor = (JavaEditor) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-				.getActiveEditor();
+		JavaEditor editor = null;
+		
+		IEditorPart[] allEditors = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getEditors();
+		
+		for(int i = 0; i < allEditors.length; i++) {
+			String title = allEditors[i].getTitle();
+			if(title.equals("FruitTest.java")) {
+				editor = (JavaEditor) allEditors[i];
+				break;
+			}
+		}
 
 		if (editor.getPartName().equals("FruitTest.java")) {
 			IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
