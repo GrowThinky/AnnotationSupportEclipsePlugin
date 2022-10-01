@@ -4,8 +4,8 @@
    <extension
          point="org.eclipse.jdt.ui.foldingStructureProviders">
       <provider
-            class="javafoldingstructureprovider.MyJavaFoldingStructureProvider1"
-            id="de.pltlab.annotationFolding.MyJavaFoldingStructureProvider1">
+            class="javafoldingstructureprovider.AnnotationFoldingStructureProvider"
+            id="de.pltlab.annotationFolding.AnnotationFoldingStructureProvider">
       </provider>
    </extension>
    <extension

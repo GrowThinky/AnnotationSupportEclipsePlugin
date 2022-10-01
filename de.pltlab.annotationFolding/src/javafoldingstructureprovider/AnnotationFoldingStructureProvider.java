@@ -85,7 +85,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 @SuppressWarnings({
     "restriction", "unused"
 })
-public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructureProvider, IJavaFoldingStructureProviderExtension {
+public class AnnotationFoldingStructureProvider implements IJavaFoldingStructureProvider, IJavaFoldingStructureProviderExtension {
 	/**
 	 * A context that contains the information needed to compute the folding structure of an
 	 * {@link ICompilationUnit} or an {@link IClassFile}. Computed folding regions are collected
@@ -875,7 +875,7 @@ public class MyJavaFoldingStructureProvider1 implements IJavaFoldingStructurePro
 	 * The projection state may be reset by calling {@link #initialize()}.
 	 * </p>
 	 */
-	public MyJavaFoldingStructureProvider1() {
+	public AnnotationFoldingStructureProvider() {
 	}
 
 	/**

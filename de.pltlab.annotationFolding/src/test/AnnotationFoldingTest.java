@@ -1,6 +1,5 @@
 package test;
 
-
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.InputStream;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -35,47 +34,49 @@ class AnnotationFoldingTest {
 
 		JavaEditor editor = (JavaEditor) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
 				.getActiveEditor();
-		IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
-		document.set(test1);
-		editor.doSave(null);
-		editor.getDocumentProvider().resetDocument(document);
 
-		if (editor != null) {
-			ProjectionViewer viewer = (ProjectionViewer) editor.getViewer();
-			
-			viewer.collapseAll();
-			viewer.reinitializeProjection();
+		if (editor.getPartName().equals("FruitTest.java")) {
+			IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+			document.set(test1);
+			editor.doSave(null);
+			editor.getDocumentProvider().resetDocument(document);
 
-			ProjectionDocument projectionDocument = viewer.getProjectionTest();
+			if (editor != null) {
+				ProjectionViewer viewer = (ProjectionViewer) editor.getViewer();
 
-			if (projectionDocument != null) {
-				
-				String foldedText = projectionDocument.get();
-				System.out.println("one" + foldedText);
-
-				Assertions.assertEquals(folded1,foldedText);
-				
-				document.set(test2);
-				editor.doSave(null);
-				
 				viewer.collapseAll();
 				viewer.reinitializeProjection();
-				
-				projectionDocument = viewer.getProjectionTest();
-				foldedText = projectionDocument.get();
-				
-				Assertions.assertEquals(folded2,foldedText);			
-				return;
+
+				ProjectionDocument projectionDocument = viewer.getProjectionTest();
+
+				if (projectionDocument != null) {
+
+					String foldedText = projectionDocument.get();
+					System.out.println("one" + foldedText);
+
+					Assertions.assertEquals(folded1, foldedText);
+
+					document.set(test2);
+					editor.doSave(null);
+
+					viewer.collapseAll();
+					viewer.reinitializeProjection();
+
+					projectionDocument = viewer.getProjectionTest();
+					foldedText = projectionDocument.get();
+
+					Assertions.assertEquals(folded2, foldedText);
+					return;
+				}
+
 			}
-
 		}
-		fail();
+		fail("Testing Window is not Active");
 
-	}   
-	
+	}
 	String test1 = "package fruits;\n"
 			+ "\n"
-			+ "public class fruitTest {\n"
+			+ "public class FruitTest {\n"
 			+ "	\n"
 			+ "	\n"
 			+ "	@SuppressWarnings({ \"restriction\",\"unused\",\"restriction\", \"unused\"  })\n"
@@ -87,7 +88,7 @@ class AnnotationFoldingTest {
 	
 	String folded1 = "package fruits;\n"
 			+ "\n"
-			+ "public class fruitTest {\n"
+			+ "public class FruitTest {\n"
 			+ "	\n"
 			+ "	\n"
 			+ "	\n"
@@ -96,7 +97,7 @@ class AnnotationFoldingTest {
 	
 	String test2 = "package fruits;\n"
 			+ "\n"
-			+ "public class fruitTest {\n"
+			+ "public class FruitTest {\n"
 			+ "	\n"
 			+ "	\n"
 			+ "	@SuppressWarnings(\"unused\")\n"
@@ -107,7 +108,7 @@ class AnnotationFoldingTest {
 	
 	String folded2 = "package fruits;\n"
 			+ "\n"
-			+ "public class fruitTest {\n"
+			+ "public class FruitTest {\n"
 			+ "	\n"
 			+ "	\n"
 			+ "	public void peel() {\n"
