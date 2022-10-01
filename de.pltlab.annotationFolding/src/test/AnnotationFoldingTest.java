@@ -28,7 +28,7 @@ import org.eclipse.ui.*;
 import org.eclipse.ui.editors.text.TextEditor;
 
 @SuppressWarnings("restriction")
-class Test {
+class AnnotationFoldingTest {
 
 	@org.junit.jupiter.api.Test
 	void test() throws ExecutionException, CoreException, BadLocationException {

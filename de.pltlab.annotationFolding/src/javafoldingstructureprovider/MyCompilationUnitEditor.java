@@ -7,7 +7,6 @@ import org.eclipse.jface.text.ISlaveDocumentManager;
 import org.eclipse.jface.text.source.IOverviewRuler;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.IVerticalRuler;
-import org.eclipse.jface.text.source.projection.MyJavaSourceViewer;
 import org.eclipse.swt.widgets.Composite;
 
 @SuppressWarnings({ "restriction", "unused" })
