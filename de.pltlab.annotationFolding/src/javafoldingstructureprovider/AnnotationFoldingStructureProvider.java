@@ -649,7 +649,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		FoldingStructureComputationContext ctx;
 		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
                 "de.pltlab.annotationFolding");
-		String hide = scopedPreferenceStore.getString("TO_HIDE");
+		String annotationsToHide = scopedPreferenceStore.getString("TO_HIDE");
 
 		public AnnotationPosition(int offset, int length, IMember member, boolean foldAll,FoldingStructureComputationContext ctx ) {
 			super(offset, length);
@@ -673,32 +673,31 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			
 			
 			ArrayList<String> toHide = new ArrayList<String>();
-			toHide.add(hide);
+			toHide.add(annotationsToHide);  // TODO: split() to support multiple 
 			IAnnotation[] annotations = new IAnnotation[0];
 			IRegion[] regions = null;
 			IAnnotatable method = (IAnnotatable) fMember;
+			
+			
 			int maxLength = 40;
+			
+			
 			// ONSOM
 			int offSet = 0;
 			
 			try {
 				
+				int memberNameStart = fMember.getNameRange().getOffset();
+
 				annotations = method.getAnnotations();
 				regions = new IRegion[annotations.length];
 				
-				
-				
-				
 				if (foldAll) {
 					
-					int start = annotations[0].getSourceRange().getOffset(); // -2 for multiple ... to change back. 
-					int end = annotations[annotations.length-1].getSourceRange().getOffset() +  annotations[annotations.length-1].getSourceRange().getLength();
-					end = document.getLineOfOffset(end);
-					int endOffset = (document.getLineOffset(end+1))-1;
+					int start = annotations[0].getSourceRange().getOffset(); // -2 for multiple ... to change back.
+					int end = document.getLineOffset(document.getLineOfOffset(memberNameStart))-1;
 					
-					System.out.println("END " + endOffset);
-					
-					return  new IRegion[] { new Region(start,endOffset -start)};
+					return  new IRegion[] { new Region(start,end -start)};
 						
 				} else {
 		
