@@ -700,45 +700,37 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 					return  new IRegion[] { new Region(start,end -start)};
 						
 				} else {
-		
-					String source = fMember.getSource();
+			
 					for (int i = 0; i < annotations.length; i++) {
 						
 						IAnnotation annotation = annotations[i];
 						
-						System.out.println("offset"+annotation.getSourceRange().getOffset());
-						System.out.println("offset"+annotation.getSourceRange().getLength());
-						
 						ISourceRange nameRange = annotation.getNameRange();
 						ISourceRange sourceRange = annotation.getSourceRange();
+						
 						int sourceEnd = sourceRange.getOffset()+sourceRange.getLength();
 						
 						int peekLength = 0;
-
-						
 						if(sourceRange.getLength() > maxLength) {
 							 peekLength = maxLength;
 					
-						
 						IScanner scanner =  ToolFactory.createScanner(true, false, false, true);
 						scanner.setSource(annotation.getSource().toCharArray());
 						
 						int start = sourceRange.getOffset();
 						int cutOff =start;
 						
+						ArrayList<Integer> tokenEnds = new ArrayList<Integer>();
 						
-						System.out.println("Source "+ String.valueOf( scanner.getSource()));
-						ArrayList<Integer> wordEnd = new ArrayList();
 						
-						int token= -1;
 						// find token-end closest to peek cutoff
+						int token= -1;
 						while (token != ITerminalSymbols.TokenNameEOF) {
 							 token = scanner.getNextToken();
-							 wordEnd.add(scanner.getCurrentTokenEndPosition());
+							 tokenEnds.add(scanner.getCurrentTokenEndPosition());
 						}
-						scanner.setSource(null);
 						
-						for(int x : wordEnd) {
+						for(int x : tokenEnds) {
 							if(x > (peekLength)) {
 								peekLength = x+1;
 								break;
@@ -747,15 +739,15 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 						}
 						}
 								
-							
+							//hide entire annotation if in toHide list
 						if (toHide.contains(annotation.getElementName())) {
 							regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
 						} else {
+							//else hide portion after cutoff 
 							if(peekLength != 0) {
 							regions[i] = new Region(sourceRange.getOffset() + peekLength ,
-								sourceRange.getLength() - ( + peekLength));
-							//regions[i] = new Region(cutOff, sourceEnd -cutOff);
-
+								sourceRange.getLength() - peekLength);
+							
 							} else {
 								//dummy region
 								regions[i]= new Region(sourceRange.getOffset() + sourceRange.getLength(),0 );
