@@ -700,60 +700,8 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 					return  new IRegion[] { new Region(start,end -start)};
 						
 				} else {
-			
-					for (int i = 0; i < annotations.length; i++) {
-						
-						IAnnotation annotation = annotations[i];
-						
-						ISourceRange nameRange = annotation.getNameRange();
-						ISourceRange sourceRange = annotation.getSourceRange();
-						
-						int sourceEnd = sourceRange.getOffset()+sourceRange.getLength();
-						
-						int peekLength = 0;
-						if(sourceRange.getLength() > maxLength) {
-							 peekLength = maxLength;
 					
-						IScanner scanner =  ToolFactory.createScanner(true, false, false, true);
-						scanner.setSource(annotation.getSource().toCharArray());
-						
-						int start = sourceRange.getOffset();
-						int cutOff =start;
-						
-						ArrayList<Integer> tokenEnds = new ArrayList<Integer>();
-						
-						
-						// find token-end closest to peek cutoff
-						int token= -1;
-						while (token != ITerminalSymbols.TokenNameEOF) {
-							 token = scanner.getNextToken();
-							 tokenEnds.add(scanner.getCurrentTokenEndPosition());
-						}
-						
-						for(int x : tokenEnds) {
-							if(x > (peekLength)) {
-								peekLength = x+1;
-								break;
-							}
-							
-						}
-						}
-								
-							//hide entire annotation if in toHide list
-						if (toHide.contains(annotation.getElementName())) {
-							regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
-						} else {
-							//else hide portion after cutoff 
-							if(peekLength != 0) {
-							regions[i] = new Region(sourceRange.getOffset() + peekLength ,
-								sourceRange.getLength() - peekLength);
-							
-							} else {
-								//dummy region
-								regions[i]= new Region(sourceRange.getOffset() + sourceRange.getLength(),0 );
-							}
-						}
-					}
+					complexFolding(toHide, annotations, regions, maxLength);
 
 				}
 
@@ -763,6 +711,63 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			
 			return regions;
 		
+		}
+
+		private void complexFolding(ArrayList<String> toHide, IAnnotation[] annotations, IRegion[] regions, int maxLength)
+				throws JavaModelException, InvalidInputException {
+			for (int i = 0; i < annotations.length; i++) {
+				
+				IAnnotation annotation = annotations[i];
+				
+				ISourceRange nameRange = annotation.getNameRange();
+				ISourceRange sourceRange = annotation.getSourceRange();
+				
+				int sourceEnd = sourceRange.getOffset()+sourceRange.getLength();
+				
+				int peekLength = 0;
+				if(sourceRange.getLength() > maxLength) {
+					 peekLength = maxLength;
+			
+				IScanner scanner =  ToolFactory.createScanner(true, false, false, true);
+				scanner.setSource(annotation.getSource().toCharArray());
+				
+				int start = sourceRange.getOffset();
+				int cutOff =start;
+				
+				ArrayList<Integer> tokenEnds = new ArrayList<Integer>();
+				
+				
+				// find token-end closest to peek cutoff
+				int token= -1;
+				while (token != ITerminalSymbols.TokenNameEOF) {
+					 token = scanner.getNextToken();
+					 tokenEnds.add(scanner.getCurrentTokenEndPosition());
+				}
+				
+				for(int x : tokenEnds) {
+					if(x > (peekLength)) {
+						peekLength = x+1;
+						break;
+					}
+					
+				}
+				}
+						
+					//hide entire annotation if in toHide list
+				if (toHide.contains(annotation.getElementName())) {
+					regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
+				} else {
+					//else hide portion after cutoff 
+					if(peekLength != 0) {
+					regions[i] = new Region(sourceRange.getOffset() + peekLength ,
+						sourceRange.getLength() - peekLength);
+					
+					} else {
+						//dummy region
+						regions[i]= new Region(sourceRange.getOffset() + sourceRange.getLength(),0 );
+					}
+				}
+			}
 		}
 
 		/*
