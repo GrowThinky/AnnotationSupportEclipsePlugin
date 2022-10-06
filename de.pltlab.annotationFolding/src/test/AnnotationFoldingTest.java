@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Assertions;
 import org.eclipse.ui.*;
 import org.eclipse.ui.editors.text.TextEditor;
 
-@SuppressWarnings("restriction")
+@SuppressWarnings({"restriction", "deprecation"})
 class AnnotationFoldingTest {
 
 	@org.junit.jupiter.api.Test

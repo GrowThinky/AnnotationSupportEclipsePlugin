@@ -75,22 +75,23 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 /**
  * Updates the projection model of a class file or compilation unit.
  * <p>
- * Clients may instantiate or subclass. Subclasses must make sure to always call the superclass'
- * code when overriding methods that are marked with "subclasses may extend".
+ * Clients may instantiate or subclass. Subclasses must make sure to always call
+ * the superclass' code when overriding methods that are marked with "subclasses
+ * may extend".
  * </p>
  *
  * @since 3.0 (internal)
  * @since 3.2 (API)
  */
-@SuppressWarnings({
-    "restriction", "unused"
-})
-public class AnnotationFoldingStructureProvider implements IJavaFoldingStructureProvider, IJavaFoldingStructureProviderExtension {
+@SuppressWarnings({ "restriction", "unused" })
+public class AnnotationFoldingStructureProvider
+		implements IJavaFoldingStructureProvider, IJavaFoldingStructureProviderExtension {
 	/**
-	 * A context that contains the information needed to compute the folding structure of an
-	 * {@link ICompilationUnit} or an {@link IClassFile}. Computed folding regions are collected
-	 * via
-	 * {@linkplain #addProjectionRange(DefaultJavaFoldingStructureProvider.JavaProjectionAnnotation, Position) addProjectionRange}.
+	 * A context that contains the information needed to compute the folding
+	 * structure of an {@link ICompilationUnit} or an {@link IClassFile}. Computed
+	 * folding regions are collected via
+	 * {@linkplain #addProjectionRange(DefaultJavaFoldingStructureProvider.JavaProjectionAnnotation, Position)
+	 * addProjectionRange}.
 	 */
 	protected final class FoldingStructureComputationContext {
 		private final ProjectionAnnotationModel fModel;
@@ -100,22 +101,23 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 		private IType fFirstType;
 		private boolean fHasHeaderComment;
-		private LinkedHashMap<JavaProjectionAnnotation, Position> fMap= new LinkedHashMap<>();
+		private LinkedHashMap<JavaProjectionAnnotation, Position> fMap = new LinkedHashMap<>();
 		private IScanner fScanner;
 
-		private FoldingStructureComputationContext(IDocument document, ProjectionAnnotationModel model, boolean allowCollapsing, IScanner scanner) {
+		private FoldingStructureComputationContext(IDocument document, ProjectionAnnotationModel model,
+				boolean allowCollapsing, IScanner scanner) {
 			Assert.isNotNull(document);
 			Assert.isNotNull(model);
-			fDocument= document;
-			fModel= model;
-			fAllowCollapsing= allowCollapsing;
-			fScanner= scanner;
+			fDocument = document;
+			fModel = model;
+			fAllowCollapsing = allowCollapsing;
+			fScanner = scanner;
 		}
 
 		private void setFirstType(IType type) {
 			if (hasFirstType())
 				throw new IllegalStateException();
-			fFirstType= type;
+			fFirstType = type;
 		}
 
 		boolean hasFirstType() {
@@ -131,14 +133,14 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		}
 
 		private void setHasHeaderComment() {
-			fHasHeaderComment= true;
+			fHasHeaderComment = true;
 		}
 
 		/**
 		 * Returns <code>true</code> if newly created folding regions may be collapsed,
-		 * <code>false</code> if not. This is usually <code>false</code> when updating the
-		 * folding structure while typing; it may be <code>true</code> when computing or restoring
-		 * the initial folding structure.
+		 * <code>false</code> if not. This is usually <code>false</code> when updating
+		 * the folding structure while typing; it may be <code>true</code> when
+		 * computing or restoring the initial folding structure.
 		 *
 		 * @return <code>true</code> if newly created folding regions may be collapsed,
 		 *         <code>false</code> if not
@@ -162,17 +164,17 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 		private IScanner getScanner() {
 			if (fScanner == null)
-				fScanner= ToolFactory.createScanner(true, false, false, true);
+				fScanner = ToolFactory.createScanner(true, false, false, true);
 			return fScanner;
 		}
 
 		/**
-		 * Adds a projection (folding) region to this context. The created annotation / position
-		 * pair will be added to the {@link ProjectionAnnotationModel} of the
+		 * Adds a projection (folding) region to this context. The created annotation /
+		 * position pair will be added to the {@link ProjectionAnnotationModel} of the
 		 * {@link ProjectionViewer} of the editor.
 		 *
 		 * @param annotation the annotation to add
-		 * @param position the corresponding position
+		 * @param position   the corresponding position
 		 */
 		public void addProjectionRange(JavaProjectionAnnotation annotation, Position position) {
 			fMap.put(annotation, position);
@@ -222,7 +224,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		public boolean collapseMembers() {
 			return fAllowCollapsing && fCollapseMembers;
 		}
-		
+
 		/**
 		 * Returns <code>true</code> if annotations should be collapsed.
 		 *
@@ -231,7 +233,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		public boolean collapseAnnotations() {
 			return fAllowCollapsing && fCollapseAnnotations;
 		}
-	
+
 	}
 
 	/**
@@ -246,15 +248,15 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		 * Creates a new projection annotation.
 		 *
 		 * @param isCollapsed <code>true</code> to set the initial state to collapsed,
-		 *        <code>false</code> to set it to expanded
-		 * @param element the java element this annotation refers to
-		 * @param isComment <code>true</code> for a foldable comment, <code>false</code> for a
-		 *        foldable code element
+		 *                    <code>false</code> to set it to expanded
+		 * @param element     the java element this annotation refers to
+		 * @param isComment   <code>true</code> for a foldable comment,
+		 *                    <code>false</code> for a foldable code element
 		 */
 		public JavaProjectionAnnotation(boolean isCollapsed, IJavaElement element, boolean isComment) {
 			super(isCollapsed);
-			fJavaElement= element;
-			fIsComment= isComment;
+			fJavaElement = element;
+			fIsComment = isComment;
 		}
 
 		IJavaElement getElement() {
@@ -262,7 +264,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		}
 
 		void setElement(IJavaElement element) {
-			fJavaElement= element;
+			fJavaElement = element;
 		}
 
 		boolean isComment() {
@@ -270,7 +272,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		}
 
 		void setIsComment(boolean isComment) {
-			fIsComment= isComment;
+			fIsComment = isComment;
 		}
 
 		/*
@@ -279,19 +281,19 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		@Override
 		public String toString() {
 			return "JavaProjectionAnnotation:\n" + //$NON-NLS-1$
-					"\telement: \t"+ fJavaElement.toString() + "\n" + //$NON-NLS-1$ //$NON-NLS-2$
+					"\telement: \t" + fJavaElement.toString() + "\n" + //$NON-NLS-1$ //$NON-NLS-2$
 					"\tcollapsed: \t" + isCollapsed() + "\n" + //$NON-NLS-1$ //$NON-NLS-2$
 					"\tcomment: \t" + isComment() + "\n"; //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
-
 	private static final class Tuple {
 		JavaProjectionAnnotation annotation;
 		Position position;
+
 		Tuple(JavaProjectionAnnotation annotation, Position position) {
-			this.annotation= annotation;
-			this.position= position;
+			this.annotation = annotation;
+			this.position = position;
 		}
 	}
 
@@ -322,9 +324,10 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		@Override
 		public boolean match(JavaProjectionAnnotation annotation) {
 			if (!annotation.isComment() && !annotation.isMarkedDeleted()) {
-				IJavaElement element= annotation.getElement();
+				IJavaElement element = annotation.getElement();
 				if (element instanceof IMember) {
-					if (element.getElementType() != IJavaElement.TYPE || ((IMember) element).getDeclaringType() != null) {
+					if (element.getElementType() != IJavaElement.TYPE
+							|| ((IMember) element).getDeclaringType() != null) {
 						return true;
 					}
 				}
@@ -341,15 +344,15 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		private final boolean fMatchCollapsed;
 
 		private JavaElementSetFilter(Set<? extends IJavaElement> set, boolean matchCollapsed) {
-			fSet= set;
-			fMatchCollapsed= matchCollapsed;
+			fSet = set;
+			fMatchCollapsed = matchCollapsed;
 		}
 
 		@Override
 		public boolean match(JavaProjectionAnnotation annotation) {
-			boolean stateMatch= fMatchCollapsed == annotation.isCollapsed();
+			boolean stateMatch = fMatchCollapsed == annotation.isCollapsed();
 			if (stateMatch && !annotation.isComment() && !annotation.isMarkedDeleted()) {
-				IJavaElement element= annotation.getElement();
+				IJavaElement element = annotation.getElement();
 				if (fSet.contains(element)) {
 					return true;
 				}
@@ -361,12 +364,15 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	private class ElementChangedListener implements IElementChangedListener {
 
 		/*
-		 * @see org.eclipse.jdt.core.IElementChangedListener#elementChanged(org.eclipse.jdt.core.ElementChangedEvent)
+		 * @see
+		 * org.eclipse.jdt.core.IElementChangedListener#elementChanged(org.eclipse.jdt.
+		 * core.ElementChangedEvent)
 		 */
 		@Override
 		public void elementChanged(ElementChangedEvent e) {
-			IJavaElementDelta delta= findElement(fInput, e.getDelta());
-			if (delta != null && (delta.getFlags() & (IJavaElementDelta.F_CONTENT | IJavaElementDelta.F_CHILDREN)) != 0) {
+			IJavaElementDelta delta = findElement(fInput, e.getDelta());
+			if (delta != null
+					&& (delta.getFlags() & (IJavaElementDelta.F_CONTENT | IJavaElementDelta.F_CHILDREN)) != 0) {
 
 				if (shouldIgnoreDelta(e.getDelta().getCompilationUnitAST(), delta))
 					return;
@@ -383,11 +389,11 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		/**
 		 * Ignore the delta if there are errors on the caret line.
 		 * <p>
-		 * We don't ignore the delta if an import is added and the
-		 * caret isn't inside the import container.
+		 * We don't ignore the delta if an import is added and the caret isn't inside
+		 * the import container.
 		 * </p>
 		 *
-		 * @param ast the compilation unit AST
+		 * @param ast   the compilation unit AST
 		 * @param delta the Java element delta for the given AST element
 		 * @return <code>true</code> if the delta should be ignored
 		 * @since 3.3
@@ -396,17 +402,19 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			if (ast == null)
 				return false; // can't compute
 
-			IDocument document= getDocument();
+			IDocument document = getDocument();
 			if (document == null)
 				return false; // can't compute
 
-			JavaEditor editor= fEditor;
+			JavaEditor editor = fEditor;
 			if (editor == null || editor.getCachedSelectedRange() == null)
 				return false; // can't compute
 
 			try {
-				if (delta.getAffectedChildren().length == 1 && delta.getAffectedChildren()[0].getElement() instanceof IImportContainer) {
-					IJavaElement elem= SelectionConverter.getElementAtOffset(ast.getTypeRoot(), new TextSelection(editor.getCachedSelectedRange().x, editor.getCachedSelectedRange().y));
+				if (delta.getAffectedChildren().length == 1
+						&& delta.getAffectedChildren()[0].getElement() instanceof IImportContainer) {
+					IJavaElement elem = SelectionConverter.getElementAtOffset(ast.getTypeRoot(),
+							new TextSelection(editor.getCachedSelectedRange().x, editor.getCachedSelectedRange().y));
 					if (!(elem instanceof IImportDeclaration))
 						return false;
 
@@ -415,9 +423,9 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 				return false; // can't compute
 			}
 
-			int caretLine= 0;
+			int caretLine = 0;
 			try {
-				caretLine= document.getLineOfOffset(editor.getCachedSelectedRange().x) + 1;
+				caretLine = document.getLineOfOffset(editor.getCachedSelectedRange().x) + 1;
 			} catch (BadLocationException x) {
 				return false; // can't compute
 			}
@@ -438,7 +446,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			if (delta == null || target == null)
 				return null;
 
-			IJavaElement element= delta.getElement();
+			IJavaElement element = delta.getElement();
 
 			if (element.getElementType() > IJavaElement.CLASS_FILE)
 				return null;
@@ -447,7 +455,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 				return delta;
 
 			for (IJavaElementDelta child : delta.getAffectedChildren()) {
-				IJavaElementDelta d= findElement(target, child);
+				IJavaElementDelta d = findElement(target, child);
 				if (d != null)
 					return d;
 			}
@@ -456,6 +464,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		}
 	}
 
+	
 	/**
 	 * Projection position that will return two foldable regions: one folding away
 	 * the region from after the '/**' to the beginning of the content, the other
@@ -463,24 +472,26 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	 */
 	private static final class CommentPosition extends Position implements IProjectionPosition {
 		private boolean isAnnotation;
+
 		CommentPosition(int offset, int length, boolean isAnnotation) {
 			super(offset, length);
 			this.isAnnotation = isAnnotation;
 		}
 
 		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#computeFoldingRegions(org.eclipse.jface.text.IDocument)
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeFoldingRegions(org.eclipse.jface.text.IDocument)
 		 */
 		@Override
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
-				
-			DocumentCharacterIterator sequence= new DocumentCharacterIterator(document, offset, offset + length);
-			int prefixEnd= 0;
-			int contentStart= findFirstContent(sequence, prefixEnd);
 
-			int firstLine= document.getLineOfOffset(offset + prefixEnd);
-			int captionLine= document.getLineOfOffset(offset + contentStart);
-			int lastLine= document.getLineOfOffset(offset + length);
+			DocumentCharacterIterator sequence = new DocumentCharacterIterator(document, offset, offset + length);
+			int prefixEnd = 0;
+			int contentStart = findFirstContent(sequence, prefixEnd);
+
+			int firstLine = document.getLineOfOffset(offset + prefixEnd);
+			int captionLine = document.getLineOfOffset(offset + contentStart);
+			int lastLine = document.getLineOfOffset(offset + length);
 
 			Assert.isTrue(firstLine <= captionLine, "first folded line is greater than the caption line"); //$NON-NLS-1$
 			Assert.isTrue(captionLine <= lastLine, "caption line is greater than the last folded line"); //$NON-NLS-1$
@@ -488,19 +499,19 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			IRegion preRegion;
 			if (firstLine < captionLine) {
 //				preRegion= new Region(offset + prefixEnd, contentStart - prefixEnd);
-				int preOffset= document.getLineOffset(firstLine);
-				IRegion preEndLineInfo= document.getLineInformation(captionLine);
-				int preEnd= preEndLineInfo.getOffset();
-				preRegion= new Region(preOffset, preEnd - preOffset);
+				int preOffset = document.getLineOffset(firstLine);
+				IRegion preEndLineInfo = document.getLineInformation(captionLine);
+				int preEnd = preEndLineInfo.getOffset();
+				preRegion = new Region(preOffset, preEnd - preOffset);
 			} else {
-				preRegion= null;
+				preRegion = null;
 			}
 
 			if (captionLine < lastLine) {
-				int postOffset= document.getLineOffset(captionLine + 1);
-				int postLength= offset + length - postOffset;
+				int postOffset = document.getLineOffset(captionLine + 1);
+				int postLength = offset + length - postOffset;
 				if (postLength > 0) {
-					IRegion postRegion= new Region(postOffset, postLength);
+					IRegion postRegion = new Region(postOffset, postLength);
 					if (preRegion == null)
 						return new IRegion[] { postRegion };
 					return new IRegion[] { preRegion, postRegion };
@@ -511,21 +522,21 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 				return new IRegion[] { preRegion };
 
 			return null;
-			
+
 		}
 
 		/**
 		 * Finds the offset of the first identifier part within <code>content</code>.
 		 * Returns 0 if none is found.
 		 *
-		 * @param content the content to search
+		 * @param content   the content to search
 		 * @param prefixEnd the end of the prefix
-		 * @return the first index of a unicode identifier part, or zero if none can
-		 *         be found
+		 * @return the first index of a unicode identifier part, or zero if none can be
+		 *         found
 		 */
 		private int findFirstContent(final CharSequence content, int prefixEnd) {
-			int lenght= content.length();
-			for (int i= prefixEnd; i < lenght; i++) {
+			int lenght = content.length();
+			for (int i = prefixEnd; i < lenght; i++) {
 				if (Character.isUnicodeIdentifierPart(content.charAt(i)))
 					return i;
 			}
@@ -533,11 +544,12 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		}
 
 		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#computeCaptionOffset(org.eclipse.jface.text.IDocument)
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeCaptionOffset(org.eclipse.jface.text.IDocument)
 		 */
 		@Override
 		public int computeCaptionOffset(IDocument document) throws BadLocationException {
-			DocumentCharacterIterator sequence= new DocumentCharacterIterator(document, offset, offset + length);
+			DocumentCharacterIterator sequence = new DocumentCharacterIterator(document, offset, offset + length);
 			return findFirstContent(sequence, 0);
 		}
 	}
@@ -554,62 +566,64 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		public JavaElementPosition(int offset, int length, IMember member) {
 			super(offset, length);
 			Assert.isNotNull(member);
-			fMember= member;
+			fMember = member;
 		}
 
 		public void setMember(IMember member) {
 			Assert.isNotNull(member);
-			fMember= member;
+			fMember = member;
 		}
 
 		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#computeFoldingRegions(org.eclipse.jface.text.IDocument)
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeFoldingRegions(org.eclipse.jface.text.IDocument)
 		 */
 		@Override
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
-			int nameStart= offset;
+			int nameStart = offset;
 			try {
-				/* The member's name range may not be correct. However,
-				 * reconciling would trigger another element delta which would
-				 * lead to reentrant situations. Therefore, we optimistically
-				 * assume that the name range is correct, but double check the
-				 * received lines below. */
-				ISourceRange nameRange= fMember.getNameRange();
+				/*
+				 * The member's name range may not be correct. However, reconciling would
+				 * trigger another element delta which would lead to reentrant situations.
+				 * Therefore, we optimistically assume that the name range is correct, but
+				 * double check the received lines below.
+				 */
+				ISourceRange nameRange = fMember.getNameRange();
 				if (nameRange != null)
-					nameStart= nameRange.getOffset();
+					nameStart = nameRange.getOffset();
 
 			} catch (JavaModelException e) {
 				// ignore and use default
 			}
 
-			int firstLine= document.getLineOfOffset(offset);
-			int captionLine= document.getLineOfOffset(nameStart);
-			int lastLine= document.getLineOfOffset(offset + length);
-			
+			int firstLine = document.getLineOfOffset(offset);
+			int captionLine = document.getLineOfOffset(nameStart);
+			int lastLine = document.getLineOfOffset(offset + length);
 
-			/* see comment above - adjust the caption line to be inside the
-			 * entire folded region, and rely on later element deltas to correct
-			 * the name range. */
+			/*
+			 * see comment above - adjust the caption line to be inside the entire folded
+			 * region, and rely on later element deltas to correct the name range.
+			 */
 			if (captionLine < firstLine)
-				captionLine= firstLine;
+				captionLine = firstLine;
 			if (captionLine > lastLine)
-				captionLine= lastLine;
+				captionLine = lastLine;
 
 			IRegion preRegion;
 			if (firstLine < captionLine) {
-				int preOffset= document.getLineOffset(firstLine);
-				IRegion preEndLineInfo= document.getLineInformation(captionLine);
-				int preEnd= preEndLineInfo.getOffset();
-				preRegion= new Region(preOffset, preEnd - preOffset);
+				int preOffset = document.getLineOffset(firstLine);
+				IRegion preEndLineInfo = document.getLineInformation(captionLine);
+				int preEnd = preEndLineInfo.getOffset();
+				preRegion = new Region(preOffset, preEnd - preOffset);
 			} else {
-				preRegion= null;
+				preRegion = null;
 			}
 
 			if (captionLine < lastLine) {
-				int postOffset= document.getLineOffset(captionLine + 1);
-				int postLength= offset + length - postOffset;
+				int postOffset = document.getLineOffset(captionLine + 1);
+				int postLength = offset + length - postOffset;
 				if (postLength > 0) {
-					IRegion postRegion= new Region(postOffset, postLength);
+					IRegion postRegion = new Region(postOffset, postLength);
 					if (preRegion == null)
 						return new IRegion[] { postRegion };
 					return new IRegion[] { preRegion, postRegion };
@@ -623,16 +637,17 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		}
 
 		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#computeCaptionOffset(org.eclipse.jface.text.IDocument)
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeCaptionOffset(org.eclipse.jface.text.IDocument)
 		 */
 		@Override
 		public int computeCaptionOffset(IDocument document) throws BadLocationException {
-			int nameStart= offset;
+			int nameStart = offset;
 			try {
 				// need a reconcile here?
-				ISourceRange nameRange= fMember.getNameRange();
+				ISourceRange nameRange = fMember.getNameRange();
 				if (nameRange != null)
-					nameStart= nameRange.getOffset();
+					nameStart = nameRange.getOffset();
 			} catch (JavaModelException e) {
 				// ignore and use default
 			}
@@ -648,59 +663,58 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		boolean foldAll;
 		FoldingStructureComputationContext ctx;
 		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-                "de.pltlab.annotationFolding");
+				"de.pltlab.annotationFolding");
 		String annotationsToHide = scopedPreferenceStore.getString("TO_HIDE");
 
-		public AnnotationPosition(int offset, int length, IMember member, boolean foldAll,FoldingStructureComputationContext ctx ) {
+		public AnnotationPosition(int offset, int length, IMember member, boolean foldAll,
+				FoldingStructureComputationContext ctx) {
 			super(offset, length);
 			Assert.isNotNull(member);
-			fMember= member;
-			this.foldAll= foldAll;
+			fMember = member;
+			this.foldAll = foldAll;
 			this.ctx = ctx;
-			
+
 		}
 
 		public void setMember(IMember member) {
 			Assert.isNotNull(member);
-			fMember= member;
+			fMember = member;
 		}
 
 		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#computeFoldingRegions(org.eclipse.jface.text.IDocument)
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeFoldingRegions(org.eclipse.jface.text.IDocument)
 		 */
 		@Override
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
-			
-			
+
 			ArrayList<String> toHide = new ArrayList<String>();
-			toHide.add(annotationsToHide);  // TODO: split() to support multiple 
+			toHide.add(annotationsToHide); // TODO: split() to support multiple
 			IAnnotation[] annotations = new IAnnotation[0];
 			IRegion[] regions = null;
 			IAnnotatable method = (IAnnotatable) fMember;
-			
-			
+
 			int maxLength = 40;
-			
-			
+
 			// ONSOM
 			int offSet = 0;
-			
+
 			try {
-				
+
 				int memberNameStart = fMember.getNameRange().getOffset();
 
 				annotations = method.getAnnotations();
 				regions = new IRegion[annotations.length];
-				
+
 				if (foldAll) {
-					
+
 					int start = annotations[0].getSourceRange().getOffset(); // -2 for multiple ... to change back.
-					int end = document.getLineOffset(document.getLineOfOffset(memberNameStart))-1;
-					
-					return  new IRegion[] { new Region(start,end -start)};
-						
+					int end = document.getLineOffset(document.getLineOfOffset(memberNameStart)) - 1;
+
+					return new IRegion[] { new Region(start, end - start) };
+
 				} else {
-					
+
 					complexFolding(toHide, annotations, regions, maxLength);
 
 				}
@@ -708,79 +722,79 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			} catch (JavaModelException | InvalidInputException e) {
 
 			}
-			
+
 			return regions;
-		
+
 		}
 
-		private void complexFolding(ArrayList<String> toHide, IAnnotation[] annotations, IRegion[] regions, int maxLength)
-				throws JavaModelException, InvalidInputException {
+		private void complexFolding(ArrayList<String> toHide, IAnnotation[] annotations, IRegion[] regions,
+				int maxLength) throws JavaModelException, InvalidInputException {
 			for (int i = 0; i < annotations.length; i++) {
-				
+
 				IAnnotation annotation = annotations[i];
-				
+
 				ISourceRange nameRange = annotation.getNameRange();
 				ISourceRange sourceRange = annotation.getSourceRange();
-				
-				int sourceEnd = sourceRange.getOffset()+sourceRange.getLength();
-				
+
+				int sourceEnd = sourceRange.getOffset() + sourceRange.getLength();
+
 				int peekLength = 0;
-				if(sourceRange.getLength() > maxLength) {
-					 peekLength = maxLength;
-			
-				IScanner scanner =  ToolFactory.createScanner(true, false, false, true);
-				scanner.setSource(annotation.getSource().toCharArray());
-				
-				int start = sourceRange.getOffset();
-				int cutOff =start;
-				
-				ArrayList<Integer> tokenEnds = new ArrayList<Integer>();
-				
-				
-				// find token-end closest to peek cutoff
-				int token= -1;
-				while (token != ITerminalSymbols.TokenNameEOF) {
-					 token = scanner.getNextToken();
-					 tokenEnds.add(scanner.getCurrentTokenEndPosition());
-				}
-				
-				for(int x : tokenEnds) {
-					if(x > (peekLength)) {
-						peekLength = x+1;
-						break;
+				if (sourceRange.getLength() > maxLength) {
+					peekLength = maxLength;
+
+					IScanner scanner = ToolFactory.createScanner(true, false, false, true);
+					scanner.setSource(annotation.getSource().toCharArray());
+
+					int start = sourceRange.getOffset();
+					int cutOff = start;
+
+					ArrayList<Integer> tokenEnds = new ArrayList<Integer>();
+
+					// find token-end closest to peek cutoff
+					int token = -1;
+					while (token != ITerminalSymbols.TokenNameEOF) {
+						token = scanner.getNextToken();
+						tokenEnds.add(scanner.getCurrentTokenEndPosition());
 					}
-					
+
+					for (int x : tokenEnds) {
+						if (x > (peekLength)) {
+							peekLength = x + 1;
+							break;
+						}
+
+					}
 				}
-				}
-						
-					//hide entire annotation if in toHide list
+
+				// hide entire annotation if in toHide list
 				if (toHide.contains(annotation.getElementName())) {
 					regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
 				} else {
-					//else hide portion after cutoff 
-					if(peekLength != 0) {
-					regions[i] = new Region(sourceRange.getOffset() + peekLength ,
-						sourceRange.getLength() - peekLength);
-					
+					// else hide portion after cutoff
+					if (peekLength != 0) {
+						regions[i] = new Region(sourceRange.getOffset() + peekLength,
+								sourceRange.getLength() - peekLength);
+
 					} else {
-						//dummy region
-						regions[i]= new Region(sourceRange.getOffset() + sourceRange.getLength(),0 );
+						// dummy region
+						regions[i] = new Region(sourceRange.getOffset() + sourceRange.getLength(), 0);
 					}
 				}
 			}
 		}
 
 		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#computeCaptionOffset(org.eclipse.jface.text.IDocument)
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeCaptionOffset(org.eclipse.jface.text.IDocument)
 		 */
 		@Override
 		public int computeCaptionOffset(IDocument document) throws BadLocationException {
-			int nameStart= offset;
+			int nameStart = offset;
 			try {
 				// need a reconcile here?
-				ISourceRange nameRange= fMember.getNameRange();
+				ISourceRange nameRange = fMember.getNameRange();
 				if (nameRange != null)
-					nameStart= nameRange.getOffset();
+					nameStart = nameRange.getOffset();
 			} catch (JavaModelException e) {
 				// ignore and use default
 			}
@@ -789,7 +803,350 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		}
 
 	}
-	
+
+	private static final class AnnotationBlockPosition extends Position implements IProjectionPosition {
+
+		private IMember fMember;
+		boolean foldAll;
+		FoldingStructureComputationContext ctx;
+		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
+				"de.pltlab.annotationFolding");
+		String annotationsToHide = scopedPreferenceStore.getString("TO_HIDE");
+		int[] annotationGroupings;
+		
+		public AnnotationBlockPosition(int offset, int length, IMember member, boolean foldAll,
+				int[] annotationGrouping, FoldingStructureComputationContext ctx) {
+			super(offset, length);
+			Assert.isNotNull(member);
+			fMember = member;
+			this.foldAll = foldAll;
+			this.ctx = ctx;
+			this.annotationGroupings = annotationGrouping;
+
+		}
+
+		public void setMember(IMember member) {
+			Assert.isNotNull(member);
+			fMember = member;
+		}
+
+		/*
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeFoldingRegions(org.eclipse.jface.text.IDocument)
+		 */
+		@Override
+		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
+
+			ArrayList<String> toHide = new ArrayList<String>();
+			toHide.add(annotationsToHide); // TODO: split() to support multiple
+			IAnnotation[] annotations = new IAnnotation[0];
+			IRegion[] regions = null;
+			IAnnotatable method = (IAnnotatable) fMember;
+
+			int maxLength = 40;
+
+			// ONSOM
+			int offSet = 0;
+
+			try {
+
+				int memberNameStart = fMember.getNameRange().getOffset();
+
+				annotations = method.getAnnotations();
+				regions = new IRegion[annotations.length];
+
+				if (foldAll) {
+
+					int start = annotations[0].getSourceRange().getOffset(); // -2 for multiple ... to change back.
+					int end = document.getLineOffset(document.getLineOfOffset(memberNameStart)) - 1;
+
+					return new IRegion[] { new Region(start, end - start) };
+
+				} else {
+
+					complexFolding(toHide, annotations, regions, maxLength);
+
+				}
+
+			} catch (JavaModelException | InvalidInputException e) {
+
+			}
+
+			return regions;
+
+		}
+
+		private void complexFolding(ArrayList<String> toHide, IAnnotation[] annotations, IRegion[] regions,
+				int maxLength) throws JavaModelException, InvalidInputException {
+			for (int i = 0; i < annotations.length; i++) {
+
+				IAnnotation annotation = annotations[i];
+
+				ISourceRange nameRange = annotation.getNameRange();
+				ISourceRange sourceRange = annotation.getSourceRange();
+
+				int sourceEnd = sourceRange.getOffset() + sourceRange.getLength();
+
+				int peekLength = 0;
+				if (sourceRange.getLength() > maxLength) {
+					peekLength = maxLength;
+
+					IScanner scanner = ToolFactory.createScanner(true, false, false, true);
+					scanner.setSource(annotation.getSource().toCharArray());
+
+					int start = sourceRange.getOffset();
+					int cutOff = start;
+
+					ArrayList<Integer> tokenEnds = new ArrayList<Integer>();
+
+					// find token-end closest to peek cutoff
+					int token = -1;
+					while (token != ITerminalSymbols.TokenNameEOF) {
+						token = scanner.getNextToken();
+						tokenEnds.add(scanner.getCurrentTokenEndPosition());
+					}
+
+					for (int x : tokenEnds) {
+						if (x > (peekLength)) {
+							peekLength = x + 1;
+							break;
+						}
+
+					}
+				}
+
+				// hide entire annotation if in toHide list
+				if (toHide.contains(annotation.getElementName())) {
+					regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
+				} else {
+					// else hide portion after cutoff
+					if (peekLength != 0) {
+						regions[i] = new Region(sourceRange.getOffset() + peekLength,
+								sourceRange.getLength() - peekLength);
+
+					} else {
+						// dummy region
+						regions[i] = new Region(sourceRange.getOffset() + sourceRange.getLength(), 0);
+					}
+				}
+			}
+		}
+
+		/*
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeCaptionOffset(org.eclipse.jface.text.IDocument)
+		 */
+		@Override
+		public int computeCaptionOffset(IDocument document) throws BadLocationException {
+			int nameStart = offset;
+			try {
+				// need a reconcile here?
+				ISourceRange nameRange = fMember.getNameRange();
+				if (nameRange != null)
+					nameStart = nameRange.getOffset();
+			} catch (JavaModelException e) {
+				// ignore and use default
+			}
+
+			return nameStart - offset;
+		}
+
+	}
+
+	private static final class AnnotationInlinePosition extends Position implements IProjectionPosition {
+
+		private IMember fMember;
+		boolean foldAll;
+		FoldingStructureComputationContext ctx;
+		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
+				"de.pltlab.annotationFolding");
+		String annotationsToHide = scopedPreferenceStore.getString("TO_HIDE");
+		int[] annotationGroupings;
+
+		public AnnotationInlinePosition(int offset, int length, IMember member, boolean foldAll,
+				int[] annotationGrouping, FoldingStructureComputationContext ctx) {
+			super(offset, length);
+			Assert.isNotNull(member);
+			fMember = member;
+			this.foldAll = foldAll;
+			this.ctx = ctx;
+			this.annotationGroupings = annotationGrouping;
+
+		}
+
+		public void setMember(IMember member) {
+			Assert.isNotNull(member);
+			fMember = member;
+		}
+
+		/*
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeFoldingRegions(org.eclipse.jface.text.IDocument)
+		 */
+		@Override
+		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
+
+			ArrayList<String> toHide = new ArrayList<String>();
+			toHide.add(annotationsToHide); // TODO: split() to support multiple
+			IAnnotation[] annotations = new IAnnotation[0];
+			IRegion[] regions = null;
+			IAnnotatable method = (IAnnotatable) fMember;
+			
+			ArrayList<IRegion> regionsArrayList = new ArrayList<IRegion>();
+			
+
+			int maxLength = 40;
+
+			// ONSOM
+			int offSet = 0;
+
+			try {
+
+				int memberNameStart = fMember.getNameRange().getOffset();
+
+				annotations = method.getAnnotations();
+				regions = new IRegion[annotations.length];
+
+				if (foldAll) {
+					int start = annotations[0].getSourceRange().getOffset(); // -2 for multiple ... to change back.
+					int end = document.getLineOffset(document.getLineOfOffset(memberNameStart)) - 1;
+
+					return new IRegion[] { new Region(start, end - start) };
+
+				} else {
+					ArrayList<IAnnotation> a = new ArrayList<>();
+					
+					for(int i = annotationGroupings[0]; i <= annotationGroupings[1];i++ ) {
+						a.add(annotations[i]);
+						annotations[i].getNameRange();
+					} 
+					
+					for(IAnnotation annotation : a) {
+						ISourceRange sourceRange = annotation.getSourceRange();
+						IScanner scanner = ToolFactory.createScanner(true, false, false, true);
+						scanner.setSource(annotation.getSource().toCharArray());
+
+						int start = sourceRange.getOffset();
+						int argStart = start;
+						int argEnd = start;
+
+						// find "(" and ")" token positions
+						int token = -1;
+						boolean startFound = false;
+						while (token != ITerminalSymbols.TokenNameEOF) {
+							token = scanner.getNextToken();
+							if(!startFound && token == ITerminalSymbols.TokenNameLPAREN) {
+								argStart= start + scanner.getCurrentTokenEndPosition() +1;
+								startFound = true;
+							} 
+							if(startFound && token == ITerminalSymbols.TokenNameRPAREN) {
+								argEnd = start + scanner.getCurrentTokenEndPosition();
+							}
+						}
+						regionsArrayList.add(new Region(argStart, argEnd - argStart));
+						
+						//TODO: adding the region for the newlineRange causes problems with line numbers
+						regionsArrayList.add(new Region(argEnd+1, 1));
+						
+					}
+					// removing region for last inlineAnnotation
+					regionsArrayList.remove(regionsArrayList.size()-1);
+					
+					 regions = new IRegion[regionsArrayList.size()];
+					 for(int i=0;i<regions.length;i++) {
+						 regions[i] = regionsArrayList.get(i);
+					 }
+					 
+					 
+					//complexFolding(toHide, annotations, regions, maxLength);
+
+				}
+
+			} catch (JavaModelException | InvalidInputException e) {
+
+			}
+
+			return regions;
+
+		}
+
+		private void complexFolding(ArrayList<String> toHide, IAnnotation[] annotations, IRegion[] regions,
+				int maxLength) throws JavaModelException, InvalidInputException {
+			for (int i = 0; i < annotations.length; i++) {
+
+				IAnnotation annotation = annotations[i];
+
+				ISourceRange nameRange = annotation.getNameRange();
+				ISourceRange sourceRange = annotation.getSourceRange();
+
+				int sourceEnd = sourceRange.getOffset() + sourceRange.getLength();
+
+				int peekLength = 0;
+				if (sourceRange.getLength() > maxLength) {
+					peekLength = maxLength;
+
+					IScanner scanner = ToolFactory.createScanner(true, false, false, true);
+					scanner.setSource(annotation.getSource().toCharArray());
+
+					int start = sourceRange.getOffset();
+					int cutOff = start;
+
+					ArrayList<Integer> tokenEnds = new ArrayList<Integer>();
+
+					// find token-end closest to peek cutoff
+					int token = -1;
+					while (token != ITerminalSymbols.TokenNameEOF) {
+						token = scanner.getNextToken();
+						tokenEnds.add(scanner.getCurrentTokenEndPosition());
+					}
+
+					for (int x : tokenEnds) {
+						if (x > (peekLength)) {
+							peekLength = x + 1;
+							break;
+						}
+
+					}
+				}
+
+				// hide entire annotation if in toHide list
+				if (toHide.contains(annotation.getElementName())) {
+					regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
+				} else {
+					// else hide portion after cutoff
+					if (peekLength != 0) {
+						regions[i] = new Region(sourceRange.getOffset() + peekLength,
+								sourceRange.getLength() - peekLength);
+
+					} else {
+						// dummy region
+						regions[i] = new Region(sourceRange.getOffset() + sourceRange.getLength(), 0);
+					}
+				}
+			}
+		}
+
+		/*
+		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
+		 * computeCaptionOffset(org.eclipse.jface.text.IDocument)
+		 */
+		@Override
+		public int computeCaptionOffset(IDocument document) throws BadLocationException {
+			int nameStart = offset;
+			try {
+				// need a reconcile here?
+				ISourceRange nameRange = fMember.getNameRange();
+				if (nameRange != null)
+					nameStart = nameRange.getOffset();
+			} catch (JavaModelException e) {
+				// ignore and use default
+			}
+
+			return nameStart - offset;
+		}
+
+	}
+
 	/**
 	 * Internal projection listener.
 	 */
@@ -803,22 +1160,24 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		 */
 		public MyProjectionListener(ProjectionViewer viewer) {
 			Assert.isLegal(viewer != null);
-			fViewer= viewer;
+			fViewer = viewer;
 			fViewer.addProjectionListener(this);
 		}
 
 		/**
-		 * Disposes of this listener and removes the projection listener from the viewer.
+		 * Disposes of this listener and removes the projection listener from the
+		 * viewer.
 		 */
 		public void dispose() {
 			if (fViewer != null) {
 				fViewer.removeProjectionListener(this);
-				fViewer= null;
+				fViewer = null;
 			}
 		}
 
 		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionListener#projectionEnabled()
+		 * @see org.eclipse.jface.text.source.projection.IProjectionListener#
+		 * projectionEnabled()
 		 */
 		@Override
 		public void projectionEnabled() {
@@ -826,7 +1185,8 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		}
 
 		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionListener#projectionDisabled()
+		 * @see org.eclipse.jface.text.source.projection.IProjectionListener#
+		 * projectionDisabled()
 		 */
 		@Override
 		public void projectionDisabled() {
@@ -839,26 +1199,25 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	private MyProjectionListener fProjectionListener;
 	private IJavaElement fInput;
 	private IElementChangedListener fElementListener;
-	
-	private Boolean annotation; 
+
+	private Boolean annotation;
 	private int[] lineLengthOfAnnotation;
 	private int[] lengthOfAnnotation;
 	private ISourceRange[] rangeOfAnnotation;
 	private ISourceRange rangeOfMethod;
-	private int methodOffset; 
+	private int methodOffset;
 	private int methodLength;
 
 	/* preferences */
-	private boolean fCollapseJavadoc= false;
-	private boolean fCollapseImportContainer= true;
-	private boolean fCollapseInnerTypes= true;
-	private boolean fCollapseMembers= false;
-	private boolean fCollapseHeaderComments= true;
-	private boolean fCollapseAnnotations= false;
-	private boolean complexAnnotationFolding = true; 
-	
+	private boolean fCollapseJavadoc = false;
+	private boolean fCollapseImportContainer = true;
+	private boolean fCollapseInnerTypes = true;
+	private boolean fCollapseMembers = false;
+	private boolean fCollapseHeaderComments = true;
+	private boolean fCollapseAnnotations = false;
+	private boolean complexAnnotationFolding = true;
+
 	private int numberOfAnnotationRanges = 0;
-	
 
 	/* filters */
 	/** Member filter, matches nested members (but not top-level types). */
@@ -868,16 +1227,18 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 	/**
 	 * Reusable scanner.
+	 * 
 	 * @since 3.3
 	 */
-	private IScanner fSharedScanner= ToolFactory.createScanner(true, false, false, false);
+	private IScanner fSharedScanner = ToolFactory.createScanner(true, false, false, false);
 
-	private volatile int fUpdatingCount= 0;
+	private volatile int fUpdatingCount = 0;
 
 	/**
 	 * Creates a new folding provider. It must be
-	 * {@link #install(ITextEditor, ProjectionViewer) installed} on an editor/viewer pair before it
-	 * can be used, and {@link #uninstall() uninstalled} when not used any longer.
+	 * {@link #install(ITextEditor, ProjectionViewer) installed} on an editor/viewer
+	 * pair before it can be used, and {@link #uninstall() uninstalled} when not
+	 * used any longer.
 	 * <p>
 	 * The projection state may be reset by calling {@link #initialize()}.
 	 * </p>
@@ -894,7 +1255,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	 * @param editor {@inheritDoc}
 	 * @param viewer {@inheritDoc}
 	 */
-	
+
 	public void install(ITextEditor editor, ProjectionViewer viewer) {
 		Assert.isLegal(editor != null);
 		Assert.isLegal(viewer != null);
@@ -902,8 +1263,8 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		internalUninstall();
 
 		if (editor instanceof JavaEditor) {
-			fProjectionListener= new MyProjectionListener(viewer);
-			fEditor= (JavaEditor)editor;
+			fProjectionListener = new MyProjectionListener(viewer);
+			fEditor = (JavaEditor) editor;
 		}
 	}
 
@@ -925,15 +1286,17 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		if (isInstalled()) {
 			handleProjectionDisabled();
 			fProjectionListener.dispose();
-			fProjectionListener= null;
-			fEditor= null;
+			fProjectionListener = null;
+			fEditor = null;
 		}
 	}
 
 	/**
-	 * Returns <code>true</code> if the provider is installed, <code>false</code> otherwise.
+	 * Returns <code>true</code> if the provider is installed, <code>false</code>
+	 * otherwise.
 	 *
-	 * @return <code>true</code> if the provider is installed, <code>false</code> otherwise
+	 * @return <code>true</code> if the provider is installed, <code>false</code>
+	 *         otherwise
 	 */
 	protected final boolean isInstalled() {
 		return fEditor != null;
@@ -941,8 +1304,8 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 	/**
 	 * Called whenever projection is enabled, for example when the viewer issues a
-	 * {@link IProjectionListener#projectionEnabled() projectionEnabled} message. When the provider
-	 * is already enabled when this method is called, it is first
+	 * {@link IProjectionListener#projectionEnabled() projectionEnabled} message.
+	 * When the provider is already enabled when this method is called, it is first
 	 * {@link #handleProjectionDisabled() disabled}.
 	 * <p>
 	 * Subclasses may extend.
@@ -958,7 +1321,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 		if (isInstalled()) {
 			initialize();
-			fElementListener= new ElementChangedListener();
+			fElementListener = new ElementChangedListener();
 			JavaCore.addElementChangedListener(fElementListener);
 		}
 	}
@@ -966,9 +1329,10 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	/**
 	 * Called whenever projection is disabled, for example when the provider is
 	 * {@link #uninstall() uninstalled}, when the viewer issues a
-	 * {@link IProjectionListener#projectionDisabled() projectionDisabled} message and before
-	 * {@link #handleProjectionEnabled() enabling} the provider. Implementations must be prepared to
-	 * handle multiple calls to this method even if the provider is already disabled.
+	 * {@link IProjectionListener#projectionDisabled() projectionDisabled} message
+	 * and before {@link #handleProjectionEnabled() enabling} the provider.
+	 * Implementations must be prepared to handle multiple calls to this method even
+	 * if the provider is already disabled.
 	 * <p>
 	 * Subclasses may extend.
 	 * </p>
@@ -976,12 +1340,13 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	protected void handleProjectionDisabled() {
 		if (fElementListener != null) {
 			JavaCore.removeElementChangedListener(fElementListener);
-			fElementListener= null;
+			fElementListener = null;
 		}
 	}
 
 	/*
-	 * @see org.eclipse.jdt.ui.text.folding.IJavaFoldingStructureProvider#initialize()
+	 * @see
+	 * org.eclipse.jdt.ui.text.folding.IJavaFoldingStructureProvider#initialize()
 	 */
 	@Override
 	public final void initialize() {
@@ -995,7 +1360,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 	private FoldingStructureComputationContext createInitialContext() {
 		initializePreferences();
-		fInput= getInputElement();
+		fInput = getInputElement();
 		if (fInput == null)
 			return null;
 
@@ -1005,16 +1370,16 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	private FoldingStructureComputationContext createContext(boolean allowCollapse) {
 		if (!isInstalled())
 			return null;
-		ProjectionAnnotationModel model= getModel();
+		ProjectionAnnotationModel model = getModel();
 		if (model == null)
 			return null;
-		IDocument doc= getDocument();
+		IDocument doc = getDocument();
 		if (doc == null)
 			return null;
 
-		IScanner scanner= null;
+		IScanner scanner = null;
 		if (fUpdatingCount == 1)
-			scanner= fSharedScanner; // reuse scanner
+			scanner = fSharedScanner; // reuse scanner
 
 		return new FoldingStructureComputationContext(doc, model, allowCollapse, scanner);
 	}
@@ -1026,66 +1391,66 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	}
 
 	private void initializePreferences() {
-		
+
 		IPreferenceStore store = JavaPlugin.getDefault().getPreferenceStore();
-		fCollapseInnerTypes= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_INNERTYPES);
-		fCollapseImportContainer= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_IMPORTS);
-		fCollapseJavadoc= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_JAVADOC);
-		fCollapseMembers= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_METHODS);
-		fCollapseHeaderComments= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_HEADERS);
-		
+		fCollapseInnerTypes = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_INNERTYPES);
+		fCollapseImportContainer = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_IMPORTS);
+		fCollapseJavadoc = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_JAVADOC);
+		fCollapseMembers = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_METHODS);
+		fCollapseHeaderComments = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_HEADERS);
+
 		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-                "de.pltlab.annotationFolding");
-        complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
-        fCollapseAnnotations = scopedPreferenceStore.getBoolean("INITIAL_FOLD");
-        
-        
-        
+				"de.pltlab.annotationFolding");
+		complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
+		fCollapseAnnotations = scopedPreferenceStore.getBoolean("INITIAL_FOLD");
+
 	}
 
 	private void update(FoldingStructureComputationContext ctx) {
 		if (ctx == null)
 			return;
-		
 
-		Map<JavaProjectionAnnotation, Position> additions= new HashMap<>();
-		List<JavaProjectionAnnotation> deletions= new ArrayList<>();
-		List<JavaProjectionAnnotation> updates= new ArrayList<>();
+		Map<JavaProjectionAnnotation, Position> additions = new HashMap<>();
+		List<JavaProjectionAnnotation> deletions = new ArrayList<>();
+		List<JavaProjectionAnnotation> updates = new ArrayList<>();
 
 		computeFoldingStructure(ctx);
-		Map<JavaProjectionAnnotation, Position> newStructure= ctx.fMap;
-		Map<IJavaElement, List<Tuple>> oldStructure= computeCurrentStructure(ctx);
+		Map<JavaProjectionAnnotation, Position> newStructure = ctx.fMap;
+		Map<IJavaElement, List<Tuple>> oldStructure = computeCurrentStructure(ctx);
 
-		Iterator<JavaProjectionAnnotation> e= newStructure.keySet().iterator();
+		Iterator<JavaProjectionAnnotation> e = newStructure.keySet().iterator();
 		while (e.hasNext()) {
-			JavaProjectionAnnotation newAnnotation= e.next();
-			Position newPosition= newStructure.get(newAnnotation);
+			JavaProjectionAnnotation newAnnotation = e.next();
+			Position newPosition = newStructure.get(newAnnotation);
 
-			IJavaElement element= newAnnotation.getElement();
+			IJavaElement element = newAnnotation.getElement();
 			/*
 			 * See https://bugs.eclipse.org/bugs/show_bug.cgi?id=130472 and
-			 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=127445 In the presence of syntax
-			 * errors, anonymous types may have a source range offset of 0. When such a situation is
-			 * encountered, we ignore the proposed folding range: if no corresponding folding range
-			 * exists, it is silently ignored; if there *is* a matching folding range, we ignore the
-			 * position update and keep the old range, in order to keep the folding structure
-			 * stable.
+			 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=127445 In the presence of
+			 * syntax errors, anonymous types may have a source range offset of 0. When such
+			 * a situation is encountered, we ignore the proposed folding range: if no
+			 * corresponding folding range exists, it is silently ignored; if there *is* a
+			 * matching folding range, we ignore the position update and keep the old range,
+			 * in order to keep the folding structure stable.
 			 */
-			boolean isMalformedAnonymousType= newPosition.getOffset() == 0 && element.getElementType() == IJavaElement.TYPE && isInnerType((IType) element);
-			List<Tuple> annotations= oldStructure.get(element);
+			boolean isMalformedAnonymousType = newPosition.getOffset() == 0
+					&& element.getElementType() == IJavaElement.TYPE && isInnerType((IType) element);
+			List<Tuple> annotations = oldStructure.get(element);
 			if (annotations == null) {
 				if (!isMalformedAnonymousType)
 					additions.put(newAnnotation, newPosition);
 			} else {
-				Iterator<Tuple> x= annotations.iterator();
-				boolean matched= false;
+				Iterator<Tuple> x = annotations.iterator();
+				boolean matched = false;
 				while (x.hasNext()) {
-					Tuple tuple= x.next();
-					JavaProjectionAnnotation existingAnnotation= tuple.annotation;
-					Position existingPosition= tuple.position;
+					Tuple tuple = x.next();
+					JavaProjectionAnnotation existingAnnotation = tuple.annotation;
+					Position existingPosition = tuple.position;
 					if (newAnnotation.isComment() == existingAnnotation.isComment()) {
-						boolean updateCollapsedState= ctx.allowCollapsing() && existingAnnotation.isCollapsed() != newAnnotation.isCollapsed();
-						if (!isMalformedAnonymousType && existingPosition != null && (!newPosition.equals(existingPosition) || updateCollapsedState)) {
+						boolean updateCollapsedState = ctx.allowCollapsing()
+								&& existingAnnotation.isCollapsed() != newAnnotation.isCollapsed();
+						if (!isMalformedAnonymousType && existingPosition != null
+								&& (!newPosition.equals(existingPosition) || updateCollapsedState)) {
 							existingPosition.setOffset(newPosition.getOffset());
 							existingPosition.setLength(newPosition.getLength());
 							if (updateCollapsedState)
@@ -1095,7 +1460,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 									existingAnnotation.markExpanded();
 							updates.add(existingAnnotation);
 						}
-						matched= true;
+						matched = true;
 						x.remove();
 						break;
 					}
@@ -1108,78 +1473,78 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			}
 		}
 
-		Iterator<List<Tuple>> iter= oldStructure.values().iterator();
+		Iterator<List<Tuple>> iter = oldStructure.values().iterator();
 		while (iter.hasNext()) {
-			List<Tuple> list= iter.next();
-			int size= list.size();
-			for (int i= 0; i < size; i++)
+			List<Tuple> list = iter.next();
+			int size = list.size();
+			for (int i = 0; i < size; i++)
 				deletions.add(list.get(i).annotation);
 		}
 
 		match(deletions, additions, updates, ctx);
 
-		Annotation[] deletedArray= deletions.toArray(new Annotation[deletions.size()]);
-		Annotation[] changedArray= updates.toArray(new Annotation[updates.size()]);
+		Annotation[] deletedArray = deletions.toArray(new Annotation[deletions.size()]);
+		Annotation[] changedArray = updates.toArray(new Annotation[updates.size()]);
 		ctx.getModel().modifyAnnotations(deletedArray, additions, changedArray);
 
 		ctx.fScanner.setSource(null);
 	}
 
 	private void computeFoldingStructure(FoldingStructureComputationContext ctx) {
-		IParent parent= (IParent) fInput;
+		IParent parent = (IParent) fInput;
 		try {
 			if (!(fInput instanceof ISourceReference))
 				return;
-			String source= ((ISourceReference)fInput).getSource();
+			String source = ((ISourceReference) fInput).getSource();
 			if (source == null)
 				return;
 
 			ctx.getScanner().setSource(source.toCharArray());
-			
+
 			computeFoldingStructure(parent.getChildren(), ctx);
 		} catch (JavaModelException x) {
 		}
 	}
-	
-	// compute for children (recursively) JavaElements 
-	private void computeFoldingStructure(IJavaElement[] elements, FoldingStructureComputationContext ctx) throws JavaModelException {
-		
+
+	// compute for children (recursively) JavaElements
+	private void computeFoldingStructure(IJavaElement[] elements, FoldingStructureComputationContext ctx)
+			throws JavaModelException {
+
 		for (IJavaElement element : elements) {
-			
-			if(element instanceof IMethod) {
+
+			if (element instanceof IMethod) {
 				IAnnotatable method = (IAnnotatable) element;
 				IAnnotation[] annotations = method.getAnnotations();
 			}
-			
+
 			computeFoldingStructure(element, ctx);
-			
 
 			if (element instanceof IParent) {
-				IParent parent= (IParent) element;
+				IParent parent = (IParent) element;
 				computeFoldingStructure(parent.getChildren(), ctx);
 			}
 		}
 	}
 
 	/**
-	 * Computes the folding structure for a given {@link IJavaElement java element}. Computed
-	 * projection annotations are
-	 * {@link DefaultJavaFoldingStructureProvider.FoldingStructureComputationContext#addProjectionRange(DefaultJavaFoldingStructureProvider.JavaProjectionAnnotation, Position) added}
-	 * to the computation context.
+	 * Computes the folding structure for a given {@link IJavaElement java element}.
+	 * Computed projection annotations are
+	 * {@link DefaultJavaFoldingStructureProvider.FoldingStructureComputationContext#addProjectionRange(DefaultJavaFoldingStructureProvider.JavaProjectionAnnotation, Position)
+	 * added} to the computation context.
 	 * <p>
-	 * Subclasses may extend or replace. The default implementation creates projection annotations
-	 * for the following elements:
+	 * Subclasses may extend or replace. The default implementation creates
+	 * projection annotations for the following elements:
 	 * </p>
 	 * <ul>
 	 * <li>true members (not for top-level types)</li>
 	 * <li>the javadoc comments of any member</li>
-	 * <li>header comments (javadoc or multi-line comments appearing before the first type's
-	 * javadoc or before the package or import declarations).</li>
+	 * <li>header comments (javadoc or multi-line comments appearing before the
+	 * first type's javadoc or before the package or import declarations).</li>
 	 * </ul>
 	 *
 	 * @param element the java element to compute the folding structure for
-	 * @param ctx the computation context
-	 * @throws JavaModelException 
+	 * @param ctx     the computation context
+	 * @throws JavaModelException
 	 */
 	@SuppressWarnings({ "restriction", "unused" })
 	protected void computeFoldingStructure(IJavaElement element, FoldingStructureComputationContext ctx)
@@ -1223,15 +1588,15 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 				}
 
 				// number of AnnotationRanges in compute ProjectionRang
-				if (IntStream.of(lineLengthOfAnnotation).sum() > 1) {
-					if (complexAnnotationFolding) {
-						numberOfAnnotationRanges = 2;
-					} else {
-						numberOfAnnotationRanges = 1;
-					}
-				} else {
-					numberOfAnnotationRanges = 0;
-				}
+//				if (IntStream.of(lineLengthOfAnnotation).sum() > 1) {
+//					if (complexAnnotationFolding) {
+//						numberOfAnnotationRanges = 2;
+//					} else {
+//						numberOfAnnotationRanges = 1;
+//					}
+//				} else {
+//					numberOfAnnotationRanges = 0;
+//				}
 
 			}
 
@@ -1245,39 +1610,61 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			return;
 		}
 
-		IRegion[] regions= computeProjectionRanges((ISourceReference) element, ctx);
-		
+		IRegion[] regions = computeProjectionRanges((ISourceReference) element, ctx);
+
 		if (regions.length > 0) {
 			// comments
-			for (int i= 0; i < regions.length - (numberOfAnnotationRanges + 1); i++) {
-				//IRegion normalized= alignRegion(regions[i], ctx);
-				IRegion normalized= regions[i];
-				
+			for (int i = 0; i < regions.length - (numberOfAnnotationRanges + 1); i++) {
+				// IRegion normalized= alignRegion(regions[i], ctx);
+				IRegion normalized = regions[i];
+
 				if (normalized != null) {
-					Position position= createCommentPosition(normalized,false);
+					Position position = createCommentPosition(normalized, false);
 					if (position != null) {
 						boolean commentCollapse;
 						if (i == 0 && (regions.length > 2 || ctx.hasHeaderComment()) && element == ctx.getFirstType()) {
-							commentCollapse= ctx.collapseHeaderComments();
+							commentCollapse = ctx.collapseHeaderComments();
 						} else {
-							commentCollapse= ctx.collapseJavadoc();
+							commentCollapse = ctx.collapseJavadoc();
 						}
 						ctx.addProjectionRange(new JavaProjectionAnnotation(commentCollapse, element, true), position);
 					}
 				}
-				
+
 			}
-			// annotations	
-			if(annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
-				addCombinedAnnotationRegion(element, ctx, regions);
+			// annotations  //TODO: simplify condition below. 
+			if (numberOfAnnotationRanges > 0 && annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
+
+				for (int i = regions.length - (numberOfAnnotationRanges + 1); i < regions.length - 1; i++) {
+					IRegion region =  regions[i];
+					Position position = null;
+					AnnotationRegion normalized =  (AnnotationRegion) alignRegion(regions[i], ctx);
+					if (normalized != null) {
+						if (normalized.inline) {
+							position = createAnnotationInlinePosition(normalized, (IMember) element, false, ctx);
+						} else {
+							position = createAnnotationBlockPosition(normalized, (IMember) element, false, ctx);
+						}
+						if (position != null) {
+							boolean annotationCollapse;
+							annotationCollapse = ctx.collapseAnnotations();
+							ctx.addProjectionRange(new JavaProjectionAnnotation(annotationCollapse, element, true),
+									position);
+						}
+					}
+
+				}
+
+				// addCombinedAnnotationRegion(element, ctx, regions);
 			}
-			
+
 			// code
 			if (collapseCode) {
-				IRegion normalized= alignRegion(regions[regions.length - 1], ctx);
-				//IRegion normalized= regions[regions.length - 1];
+				IRegion normalized = alignRegion(regions[regions.length - 1], ctx);
+				// IRegion normalized= regions[regions.length - 1];
 				if (normalized != null) {
-					Position position= element instanceof IMember ? createMemberPosition(normalized, (IMember) element) : createCommentPosition(normalized,false);
+					Position position = element instanceof IMember ? createMemberPosition(normalized, (IMember) element)
+							: createCommentPosition(normalized, false);
 					if (position != null)
 						ctx.addProjectionRange(new JavaProjectionAnnotation(collapse, element, false), position);
 				}
@@ -1285,8 +1672,9 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		}
 	}
 
-	private void addCombinedAnnotationRegion(IJavaElement element, FoldingStructureComputationContext ctx, IRegion[] regions) {
-		boolean foldAll = true;  //TODO: clarify logic
+	private void addCombinedAnnotationRegion(IJavaElement element, FoldingStructureComputationContext ctx,
+			IRegion[] regions) {
+		boolean foldAll = true; // TODO: clarify logic
 
 		int numberOfNonAnnotationRanges = numberOfAnnotationRanges + 1; // add member's range
 
@@ -1305,11 +1693,13 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	}
 
 	/**
-	 * Returns <code>true</code> if <code>type</code> is an anonymous enum declaration,
-	 * <code>false</code> otherwise. See also https://bugs.eclipse.org/bugs/show_bug.cgi?id=143276
+	 * Returns <code>true</code> if <code>type</code> is an anonymous enum
+	 * declaration, <code>false</code> otherwise. See also
+	 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=143276
 	 *
 	 * @param type the type to test
-	 * @return <code>true</code> if <code>type</code> is an anonymous enum declaration
+	 * @return <code>true</code> if <code>type</code> is an anonymous enum
+	 *         declaration
 	 * @since 3.3
 	 */
 	private boolean isAnonymousEnum(IType type) {
@@ -1321,7 +1711,8 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	}
 
 	/**
-	 * Returns <code>true</code> if <code>type</code> is not a top-level type, <code>false</code> if it is.
+	 * Returns <code>true</code> if <code>type</code> is not a top-level type,
+	 * <code>false</code> if it is.
 	 *
 	 * @param type the type to test
 	 * @return <code>true</code> if <code>type</code> is an inner type
@@ -1330,110 +1721,150 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		return type.getDeclaringType() != null;
 	}
 
-	
 	/**
-	 * Computes the projection ranges for a given <code>ISourceReference</code>. More than one
-	 * range or none at all may be returned. If there are no foldable regions, an empty array is
-	 * returned.
+	 * Computes the projection ranges for a given <code>ISourceReference</code>.
+	 * More than one range or none at all may be returned. If there are no foldable
+	 * regions, an empty array is returned.
 	 * <p>
-	 * The last region in the returned array (if not empty) describes the region for the java
-	 * element that implements the source reference. Any preceding regions describe javadoc comments
-	 * of that java element.
+	 * The last region in the returned array (if not empty) describes the region for
+	 * the java element that implements the source reference. Any preceding regions
+	 * describe javadoc comments of that java element.
 	 * </p>
 	 *
 	 * @param reference a java element that is a source reference
-	 * @param ctx the folding context
+	 * @param ctx       the folding context
 	 * @return the regions to be folded
 	 */
-	protected final IRegion[] computeProjectionRanges(ISourceReference reference, FoldingStructureComputationContext ctx) {
-
-	    int startOfAnnotation = 0;
+	protected final IRegion[] computeProjectionRanges(ISourceReference reference,
+			FoldingStructureComputationContext ctx) {
+		
+		numberOfAnnotationRanges = 0;
+		int startOfAnnotation = 0;
 		try {
-				ISourceRange range = reference.getSourceRange();
-				if (!SourceRange.isAvailable(range)) {
-					return new IRegion[0];
-				}
+			ISourceRange range = reference.getSourceRange();
+			if (!SourceRange.isAvailable(range)) {
+				return new IRegion[0];
+			}
 
-				String contents= reference.getSource();
-				if (contents == null) {
-					return new IRegion[0];
-				}
+			String contents = reference.getSource();
+			if (contents == null) {
+				return new IRegion[0];
+			}
 
-//				System.out.println("reference "+ reference.getSource());
+			System.out.println("reference " + reference.getSource());
 //				System.out.println(range.getLength());
-				
-				List<IRegion> regions= new ArrayList<>();
-				if (!ctx.hasFirstType() && reference instanceof IType) {
-					ctx.setFirstType((IType) reference);
-					IRegion headerComment= computeHeaderComment(ctx);
-					if (headerComment != null) {
-						regions.add(headerComment);
-						ctx.setHasHeaderComment();
-					}
+
+			List<IRegion> regions = new ArrayList<>();
+			if (!ctx.hasFirstType() && reference instanceof IType) {
+				ctx.setFirstType((IType) reference);
+				IRegion headerComment = computeHeaderComment(ctx);
+				if (headerComment != null) {
+					regions.add(headerComment);
+					ctx.setHasHeaderComment();
+				}
+			}
+
+			final int shift = range.getOffset();
+			IScanner scanner = ctx.getScanner();
+			scanner.resetTo(shift, shift + range.getLength());
+
+			int start = shift;
+			while (true) {
+
+				int token = scanner.getNextToken();
+				start = scanner.getCurrentTokenStartPosition();
+
+				switch (token) {
+
+				case ITerminalSymbols.TokenNameCOMMENT_JAVADOC:
+				case ITerminalSymbols.TokenNameCOMMENT_BLOCK: {
+
+					int end = scanner.getCurrentTokenEndPosition() + 1;
+
+					regions.add(new Region(start, end - start));
+					continue;
+				}
+				case ITerminalSymbols.TokenNameCOMMENT_LINE:
+					continue;
+
 				}
 
-				final int shift= range.getOffset();
-				IScanner scanner= ctx.getScanner();
-				scanner.resetTo(shift, shift + range.getLength());
+				break;
+			}
 
-				int start= shift;
-				while (true) {
+			if (annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
 
-					int token = scanner.getNextToken();
-					start= scanner.getCurrentTokenStartPosition();
+				IDocument document = ctx.getDocument();
 
-					switch (token) {
-						
-						case ITerminalSymbols.TokenNameCOMMENT_JAVADOC:
-						case ITerminalSymbols.TokenNameCOMMENT_BLOCK: {
-						
-							int end= scanner.getCurrentTokenEndPosition() + 1;
-							
-									
-							regions.add(new Region(start, end - start));
-							continue;
+				// addMultipleAnnotationRanges(regions, start);
+
+				// TODO: add AnnotatonInfo class?
+				if (complexAnnotationFolding) {
+					
+
+					Boolean[] inline = new Boolean[lineLengthOfAnnotation.length];
+
+					for (int i = 0; i < lineLengthOfAnnotation.length; i++) {
+						if (lineLengthOfAnnotation[i] > 1) {
+							inline[i] = false;
+						} else {
+							inline[i] = true;
 						}
-						case ITerminalSymbols.TokenNameCOMMENT_LINE:
-							continue;
-						
 					}
 
-					break;		
-				} 
-				
-				if (annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
+					int aStart = 0;
+					int aEnd = 0;
+					int firstInlineAnnotation = 0;
+					int lastInlineAnnotation = 0;
+					int[] annotationGrouping;
 					
-				   // addMultipleAnnotationRanges(regions, start);
-					
-					//OMSOM:
-					if(complexAnnotationFolding) {
-						IDocument document = ctx.getDocument();
-						int aStart = document.getLineOfOffset(rangeOfAnnotation[0].getOffset());
-						aStart = document.getLineOffset(aStart-1);
-						
-						int aEnd = document.getLineOfOffset(rangeOfAnnotation[rangeOfAnnotation.length-1].getOffset()+lengthOfAnnotation[lengthOfAnnotation.length-1]);
-						aEnd = document.getLineOffset(aEnd);
-						
-						regions.add(new Region(aStart, aEnd - aStart));
+					for (int i = 0; i < inline.length; i++) {
+						if (!inline[i]) {
+							aStart = document.getLineOffset(document.getLineOfOffset(rangeOfAnnotation[i].getOffset()));
+							aEnd = document.getLineOffset(
+									document.getLineOfOffset(rangeOfAnnotation[i].getOffset() + lengthOfAnnotation[i]));
+							annotationGrouping = new int[] {i} ;
+							regions.add(new AnnotationRegion(aStart, aEnd - aStart, false, annotationGrouping ));
+							numberOfAnnotationRanges++;
+							
+						} else {
+							boolean inlineGroup = false;
+							firstInlineAnnotation = i;
+							aStart = document.getLineOffset(document.getLineOfOffset(rangeOfAnnotation[i].getOffset()));
+							while (i + 1 < inline.length && inline[i + 1]) {
+								inlineGroup = true;
+								i++;
+								aEnd = document.getLineOffset(document
+										.getLineOfOffset(rangeOfAnnotation[i].getOffset() + lengthOfAnnotation[i]) + 1)
+										- 1;
+								lastInlineAnnotation = i;	
+							}
+							if (inlineGroup) {
+								annotationGrouping = new int[] {firstInlineAnnotation,lastInlineAnnotation};
+								regions.add(new AnnotationRegion(aStart, aEnd - aStart, true, annotationGrouping));
+								numberOfAnnotationRanges++;
+								}
+						}
 					}
-					
-					regions.add(new Region(rangeOfAnnotation[0].getOffset(), IntStream.of(lengthOfAnnotation).sum()));
-					int methodStart = rangeOfAnnotation[rangeOfAnnotation.length-1].getOffset()+ rangeOfAnnotation[rangeOfAnnotation.length-1].getLength() + 3; 
-					int methodEnd = methodStart + (rangeOfMethod.getLength() - (methodStart - rangeOfMethod.getOffset()));
-					int methodLength = methodEnd - methodStart;
-					
-					// add method region
-					regions.add(new Region(methodStart, methodLength -2 ));
-					
-				} else {
-					
+				}
+				System.out.println("Ranges: "+ numberOfAnnotationRanges);
+				//regions.add(new Region(rangeOfAnnotation[0].getOffset(), IntStream.of(lengthOfAnnotation).sum()));
+				int methodStart = rangeOfAnnotation[rangeOfAnnotation.length - 1].getOffset()
+						+ rangeOfAnnotation[rangeOfAnnotation.length - 1].getLength() + 3;
+				int methodEnd = methodStart + (rangeOfMethod.getLength() - (methodStart - rangeOfMethod.getOffset()));
+				int methodLength = methodEnd - methodStart;
+
+				// add method region
+				regions.add(new Region(methodStart, methodLength - 2));
+
+			} else {
 				// method without multiple line annotations
 				regions.add(new Region(start, shift + range.getLength() - start));
-				
-				}
-				IRegion[] result = new IRegion[regions.size()];
-				regions.toArray(result);
-				return result;
+
+			}
+			IRegion[] result = new IRegion[regions.size()];
+			regions.toArray(result);
+			return result;
 		} catch (JavaModelException | InvalidInputException | BadLocationException e) {
 		}
 
@@ -1441,30 +1872,30 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	}
 
 	private void addMultipleAnnotationRanges(List<IRegion> regions, int start) {
-		// method with multiple line annotations  
+		// method with multiple line annotations
 		for (int i = 0; i < lengthOfAnnotation.length; i++) {
 			if (lineLengthOfAnnotation[i] > 1) {
-				
+
 				// calculate start of method below annotation
-				int prevStart = start+3;
-			start = start + (lengthOfAnnotation[i]-2);
+				int prevStart = start + 3;
+				start = start + (lengthOfAnnotation[i] - 2);
 
 				// add annotation regions TODO: single Region makes more sense
-			regions.add(new Region(rangeOfAnnotation[i].getOffset(), rangeOfAnnotation[i].getLength()-1));
-				
-							}
+				regions.add(new Region(rangeOfAnnotation[i].getOffset(), rangeOfAnnotation[i].getLength() - 1));
+
+			}
 		}
 	}
-	
+
 	private int scanTilMethod(List<IRegion> regions, IScanner scanner, ISourceRange range, int start) {
-		
+
 		int shift = start;
 		try {
 			outer: while (start <= range.getOffset() + range.getLength()) {
 				int token = scanner.getNextToken();
-				start = scanner.getCurrentTokenStartPosition();	
+				start = scanner.getCurrentTokenStartPosition();
 				switch (token) {
-				case ITerminalSymbols.TokenNamepublic:	
+				case ITerminalSymbols.TokenNamepublic:
 					break outer;
 				case ITerminalSymbols.TokenNameprivate:
 					break outer;
@@ -1474,50 +1905,49 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 			}
 		} catch (InvalidInputException e) {
 		}
-		
+
 		return start;
-	
+
 	}
 
 	private IRegion computeHeaderComment(FoldingStructureComputationContext ctx) throws JavaModelException {
 		// search at most up to the first type
-		ISourceRange range= ctx.getFirstType().getSourceRange();
+		ISourceRange range = ctx.getFirstType().getSourceRange();
 		if (range == null)
 			return null;
-		int start= 0;
-		int end= range.getOffset();
+		int start = 0;
+		int end = range.getOffset();
 
-
-		/* code adapted from CommentFormattingStrategy:
-		 * scan the header content up to the first type. Once a comment is
-		 * found, accumulate any additional comments up to the stop condition.
-		 * The stop condition is reaching a package declaration, import container,
-		 * or the end of the input.
+		/*
+		 * code adapted from CommentFormattingStrategy: scan the header content up to
+		 * the first type. Once a comment is found, accumulate any additional comments
+		 * up to the stop condition. The stop condition is reaching a package
+		 * declaration, import container, or the end of the input.
 		 */
-		IScanner scanner= ctx.getScanner();
+		IScanner scanner = ctx.getScanner();
 		scanner.resetTo(start, end);
 
-		int headerStart= -1;
-		int headerEnd= -1;
+		int headerStart = -1;
+		int headerEnd = -1;
 		try {
-			boolean foundComment= false;
-			int terminal= scanner.getNextToken();
-			while (terminal != ITerminalSymbols.TokenNameEOF
-					&& (terminal != ITerminalSymbols.TokenNameclass)
-					&& (terminal != ITerminalSymbols.TokenNameinterface)
-					&& (terminal != ITerminalSymbols.TokenNameenum)
-					&& (!foundComment || ((terminal != ITerminalSymbols.TokenNameimport) && (terminal != ITerminalSymbols.TokenNamepackage)))) {
+			boolean foundComment = false;
+			int terminal = scanner.getNextToken();
+			while (terminal != ITerminalSymbols.TokenNameEOF && (terminal != ITerminalSymbols.TokenNameclass)
+					&& (terminal != ITerminalSymbols.TokenNameinterface) && (terminal != ITerminalSymbols.TokenNameenum)
+					&& (!foundComment || ((terminal != ITerminalSymbols.TokenNameimport)
+							&& (terminal != ITerminalSymbols.TokenNamepackage)))) {
 
-				if (terminal == ITerminalSymbols.TokenNameCOMMENT_JAVADOC || terminal == ITerminalSymbols.TokenNameCOMMENT_BLOCK || terminal == ITerminalSymbols.TokenNameCOMMENT_LINE) {
+				if (terminal == ITerminalSymbols.TokenNameCOMMENT_JAVADOC
+						|| terminal == ITerminalSymbols.TokenNameCOMMENT_BLOCK
+						|| terminal == ITerminalSymbols.TokenNameCOMMENT_LINE) {
 					if (!foundComment)
-						headerStart= scanner.getCurrentTokenStartPosition();
-					headerEnd= scanner.getCurrentTokenEndPosition();
-					foundComment= true;
+						headerStart = scanner.getCurrentTokenStartPosition();
+					headerEnd = scanner.getCurrentTokenEndPosition();
+					foundComment = true;
 				}
-				terminal= scanner.getNextToken();
-			
-			}
+				terminal = scanner.getNextToken();
 
+			}
 
 		} catch (InvalidInputException ex) {
 			return null;
@@ -1531,65 +1961,83 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 	/**
 	 * Creates a comment folding position from an
-	 * {@link #alignRegion(IRegion, DefaultJavaFoldingStructureProvider.FoldingStructureComputationContext) aligned}
-	 * region.
+	 * {@link #alignRegion(IRegion, DefaultJavaFoldingStructureProvider.FoldingStructureComputationContext)
+	 * aligned} region.
 	 *
 	 * @param aligned an aligned region
 	 * @return a folding position corresponding to <code>aligned</code>
 	 */
 	protected final Position createCommentPosition(IRegion aligned, Boolean isAnnotation) {
-		return new CommentPosition(aligned.getOffset(), aligned.getLength(),isAnnotation);
+		return new CommentPosition(aligned.getOffset(), aligned.getLength(), isAnnotation);
 	}
 
 	/**
 	 * Creates a folding position that remembers its member from an
-	 * {@link #alignRegion(IRegion, DefaultJavaFoldingStructureProvider.FoldingStructureComputationContext) aligned}
-	 * region.
+	 * {@link #alignRegion(IRegion, DefaultJavaFoldingStructureProvider.FoldingStructureComputationContext)
+	 * aligned} region.
 	 *
 	 * @param aligned an aligned region
-	 * @param member the member to remember
+	 * @param member  the member to remember
 	 * @return a folding position corresponding to <code>aligned</code>
 	 */
 	protected final Position createMemberPosition(IRegion aligned, IMember member) {
 		return new JavaElementPosition(aligned.getOffset(), aligned.getLength(), member);
 	}
-	
-	protected final Position createAnnotationPosition(IRegion aligned, IMember member,boolean foldAll,FoldingStructureComputationContext ctx) {
-		return new AnnotationPosition(aligned.getOffset(), aligned.getLength(), member,foldAll,ctx);
+
+	protected final Position createAnnotationPosition(IRegion aligned, IMember member, boolean foldAll,
+			FoldingStructureComputationContext ctx) {
+		return new AnnotationPosition(aligned.getOffset(), aligned.getLength(), member, foldAll, ctx);
+	}
+
+	protected final Position createAnnotationBlockPosition(AnnotationRegion aligned, IMember member, boolean foldAll,
+			FoldingStructureComputationContext ctx) {
+		return new AnnotationBlockPosition(aligned.getOffset(), aligned.getLength(), member, foldAll,aligned.annotationGrouping, ctx);
+	}
+
+	protected final Position createAnnotationInlinePosition(AnnotationRegion aligned, IMember member, boolean foldAll,
+			FoldingStructureComputationContext ctx) {
+		return new AnnotationInlinePosition(aligned.getOffset(), aligned.getLength(), member, foldAll, aligned.annotationGrouping, ctx);
 	}
 
 	/**
-	 * Aligns <code>region</code> to start and end at a line offset. The region's start is
-	 * decreased to the next line offset, and the end offset increased to the next line start or the
-	 * end of the document. <code>null</code> is returned if <code>region</code> is
-	 * <code>null</code> itself or does not comprise at least one line delimiter, as a single line
+	 * 
+	 * /** Aligns <code>region</code> to start and end at a line offset. The
+	 * region's start is decreased to the next line offset, and the end offset
+	 * increased to the next line start or the end of the document.
+	 * <code>null</code> is returned if <code>region</code> is <code>null</code>
+	 * itself or does not comprise at least one line delimiter, as a single line
 	 * cannot be folded.
 	 *
 	 * @param region the region to align, may be <code>null</code>
-	 * @param ctx the folding context
-	 * @return a region equal or greater than <code>region</code> that is aligned with line
-	 *         offsets, <code>null</code> if the region is too small to be foldable (e.g. covers
-	 *         only one line)
+	 * @param ctx    the folding context
+	 * @return a region equal or greater than <code>region</code> that is aligned
+	 *         with line offsets, <code>null</code> if the region is too small to be
+	 *         foldable (e.g. covers only one line)
 	 */
 	protected final IRegion alignRegion(IRegion region, FoldingStructureComputationContext ctx) {
 		if (region == null)
 			return null;
 
-		IDocument document= ctx.getDocument();
+		IDocument document = ctx.getDocument();
 
 		try {
 
-			int start= document.getLineOfOffset(region.getOffset());
-			int end= document.getLineOfOffset(region.getOffset() + region.getLength());
+			int start = document.getLineOfOffset(region.getOffset());
+			int end = document.getLineOfOffset(region.getOffset() + region.getLength());
 			if (start >= end)
 				return null;
 
-			int offset= document.getLineOffset(start);
+			int offset = document.getLineOffset(start);
 			int endOffset;
 			if (document.getNumberOfLines() > end + 1)
-				endOffset= document.getLineOffset(end + 1);
+				endOffset = document.getLineOffset(end + 1);
 			else
-				endOffset= document.getLineOffset(end) + document.getLineLength(end);
+				endOffset = document.getLineOffset(end) + document.getLineLength(end);
+			
+			if(region instanceof AnnotationRegion) {
+				AnnotationRegion annotationRegion = (AnnotationRegion) region;
+				return new AnnotationRegion(offset, endOffset - offset, annotationRegion.inline, annotationRegion.annotationGrouping);
+			}
 
 			return new Region(offset, endOffset - offset);
 
@@ -1604,11 +2052,11 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	}
 
 	private IDocument getDocument() {
-		JavaEditor editor= fEditor;
+		JavaEditor editor = fEditor;
 		if (editor == null)
 			return null;
 
-		IDocumentProvider provider= editor.getDocumentProvider();
+		IDocumentProvider provider = editor.getDocumentProvider();
 		if (provider == null)
 			return null;
 
@@ -1617,46 +2065,46 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 	/**
 	 * Matches deleted annotations to changed or added ones. A deleted
-	 * annotation/position tuple that has a matching addition / change
-	 * is updated and marked as changed. The matching tuple is not added
-	 * (for additions) or marked as deletion instead (for changes). The
-	 * result is that more annotations are changed and fewer get
-	 * deleted/re-added.
+	 * annotation/position tuple that has a matching addition / change is updated
+	 * and marked as changed. The matching tuple is not added (for additions) or
+	 * marked as deletion instead (for changes). The result is that more annotations
+	 * are changed and fewer get deleted/re-added.
 	 *
 	 * @param deletions list with deleted annotations
 	 * @param additions map with position to annotation mappings
-	 * @param changes list with changed annotations
-	 * @param ctx	the context
+	 * @param changes   list with changed annotations
+	 * @param ctx       the context
 	 */
-	private void match(List<JavaProjectionAnnotation> deletions, Map<JavaProjectionAnnotation, Position> additions, List<JavaProjectionAnnotation> changes, FoldingStructureComputationContext ctx) {
+	private void match(List<JavaProjectionAnnotation> deletions, Map<JavaProjectionAnnotation, Position> additions,
+			List<JavaProjectionAnnotation> changes, FoldingStructureComputationContext ctx) {
 		if (deletions.isEmpty() || (additions.isEmpty() && changes.isEmpty()))
 			return;
 
-		List<JavaProjectionAnnotation> newDeletions= new ArrayList<>();
-		List<JavaProjectionAnnotation> newChanges= new ArrayList<>();
+		List<JavaProjectionAnnotation> newDeletions = new ArrayList<>();
+		List<JavaProjectionAnnotation> newChanges = new ArrayList<>();
 
-		Iterator<JavaProjectionAnnotation> deletionIterator= deletions.iterator();
+		Iterator<JavaProjectionAnnotation> deletionIterator = deletions.iterator();
 		while (deletionIterator.hasNext()) {
-			JavaProjectionAnnotation deleted= deletionIterator.next();
-			Position deletedPosition= ctx.getModel().getPosition(deleted);
+			JavaProjectionAnnotation deleted = deletionIterator.next();
+			Position deletedPosition = ctx.getModel().getPosition(deleted);
 			if (deletedPosition == null)
 				continue;
 
-			Tuple deletedTuple= new Tuple(deleted, deletedPosition);
+			Tuple deletedTuple = new Tuple(deleted, deletedPosition);
 
-			Tuple match= findMatch(deletedTuple, changes, null, ctx);
-			boolean addToDeletions= true;
+			Tuple match = findMatch(deletedTuple, changes, null, ctx);
+			boolean addToDeletions = true;
 			if (match == null) {
-				match= findMatch(deletedTuple, additions.keySet(), additions, ctx);
-				addToDeletions= false;
+				match = findMatch(deletedTuple, additions.keySet(), additions, ctx);
+				addToDeletions = false;
 			}
 
 			if (match != null) {
-				IJavaElement element= match.annotation.getElement();
+				IJavaElement element = match.annotation.getElement();
 				deleted.setElement(element);
 				deletedPosition.setLength(match.position.getLength());
 				if (deletedPosition instanceof JavaElementPosition && element instanceof IMember) {
-					JavaElementPosition jep= (JavaElementPosition) deletedPosition;
+					JavaElementPosition jep = (JavaElementPosition) deletedPosition;
 					jep.setMember((IMember) element);
 				}
 
@@ -1673,35 +2121,35 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	}
 
 	/**
-	 * Finds a match for <code>tuple</code> in a collection of
-	 * annotations. The positions for the
-	 * <code>JavaProjectionAnnotation</code> instances in
-	 * <code>annotations</code> can be found in the passed
-	 * <code>positionMap</code> or <code>fCachedModel</code> if
-	 * <code>positionMap</code> is <code>null</code>.
+	 * Finds a match for <code>tuple</code> in a collection of annotations. The
+	 * positions for the <code>JavaProjectionAnnotation</code> instances in
+	 * <code>annotations</code> can be found in the passed <code>positionMap</code>
+	 * or <code>fCachedModel</code> if <code>positionMap</code> is
+	 * <code>null</code>.
 	 * <p>
-	 * A tuple is said to match another if their annotations have the
-	 * same comment flag and their position offsets are equal.
+	 * A tuple is said to match another if their annotations have the same comment
+	 * flag and their position offsets are equal.
 	 * </p>
 	 * <p>
 	 * If a match is found, the annotation gets removed from
 	 * <code>annotations</code>.
 	 * </p>
 	 *
-	 * @param tuple the tuple for which we want to find a match
-	 * @param annotations collection of
-	 *        <code>JavaProjectionAnnotation</code>
-	 * @param positionMap a <code>Map&lt;Annotation, Position&gt;</code>
-	 *        or <code>null</code>
-	 * @param ctx the context
+	 * @param tuple       the tuple for which we want to find a match
+	 * @param annotations collection of <code>JavaProjectionAnnotation</code>
+	 * @param positionMap a <code>Map&lt;Annotation, Position&gt;</code> or
+	 *                    <code>null</code>
+	 * @param ctx         the context
 	 * @return a matching tuple or <code>null</code> for no match
 	 */
-	private Tuple findMatch(Tuple tuple, Collection<JavaProjectionAnnotation> annotations, Map<JavaProjectionAnnotation, Position> positionMap, FoldingStructureComputationContext ctx) {
-		Iterator<JavaProjectionAnnotation> it= annotations.iterator();
+	private Tuple findMatch(Tuple tuple, Collection<JavaProjectionAnnotation> annotations,
+			Map<JavaProjectionAnnotation, Position> positionMap, FoldingStructureComputationContext ctx) {
+		Iterator<JavaProjectionAnnotation> it = annotations.iterator();
 		while (it.hasNext()) {
-			JavaProjectionAnnotation annotation= it.next();
+			JavaProjectionAnnotation annotation = it.next();
 			if (tuple.annotation.isComment() == annotation.isComment()) {
-				Position position= positionMap == null ? ctx.getModel().getPosition(annotation) : positionMap.get(annotation);
+				Position position = positionMap == null ? ctx.getModel().getPosition(annotation)
+						: positionMap.get(annotation);
 				if (position == null)
 					continue;
 
@@ -1716,25 +2164,25 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	}
 
 	private Map<IJavaElement, List<Tuple>> computeCurrentStructure(FoldingStructureComputationContext ctx) {
-		Map<IJavaElement, List<Tuple>> map= new HashMap<>();
-		ProjectionAnnotationModel model= ctx.getModel();
-		Iterator<Annotation> e= model.getAnnotationIterator();
+		Map<IJavaElement, List<Tuple>> map = new HashMap<>();
+		ProjectionAnnotationModel model = ctx.getModel();
+		Iterator<Annotation> e = model.getAnnotationIterator();
 		while (e.hasNext()) {
-			Object annotation= e.next();
+			Object annotation = e.next();
 			if (annotation instanceof JavaProjectionAnnotation) {
-				JavaProjectionAnnotation java= (JavaProjectionAnnotation) annotation;
-				Position position= model.getPosition(java);
+				JavaProjectionAnnotation java = (JavaProjectionAnnotation) annotation;
+				Position position = model.getPosition(java);
 				Assert.isNotNull(position);
-				List<Tuple> list= map.get(java.getElement());
+				List<Tuple> list = map.get(java.getElement());
 				if (list == null) {
-					list= new ArrayList<>(2);
+					list = new ArrayList<>(2);
 					map.put(java.getElement(), list);
 				}
 				list.add(new Tuple(java, position));
 			}
 		}
 
-		Comparator<Tuple> comparator= (o1, o2) -> o1.position.getOffset() - o2.position.getOffset();
+		Comparator<Tuple> comparator = (o1, o2) -> o1.position.getOffset() - o2.position.getOffset();
 		for (List<Tuple> list : map.values()) {
 			Collections.sort(list, comparator);
 		}
@@ -1743,6 +2191,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 	/*
 	 * @see IJavaFoldingStructureProviderExtension#collapseMembers()
+	 * 
 	 * @since 3.2
 	 */
 	@Override
@@ -1752,6 +2201,7 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 
 	/*
 	 * @see IJavaFoldingStructureProviderExtension#collapseComments()
+	 * 
 	 * @since 3.2
 	 */
 	@Override
@@ -1760,20 +2210,22 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	}
 
 	/*
-	 * @see org.eclipse.jdt.ui.text.folding.IJavaFoldingStructureProviderExtension#collapseElements(org.eclipse.jdt.core.IJavaElement[])
+	 * @see org.eclipse.jdt.ui.text.folding.IJavaFoldingStructureProviderExtension#
+	 * collapseElements(org.eclipse.jdt.core.IJavaElement[])
 	 */
 	@Override
 	public final void collapseElements(IJavaElement[] elements) {
-		Set<IJavaElement> set= new HashSet<>(Arrays.asList(elements));
+		Set<IJavaElement> set = new HashSet<>(Arrays.asList(elements));
 		modifyFiltered(new JavaElementSetFilter(set, false), false);
 	}
 
 	/*
-	 * @see org.eclipse.jdt.ui.text.folding.IJavaFoldingStructureProviderExtension#expandElements(org.eclipse.jdt.core.IJavaElement[])
+	 * @see org.eclipse.jdt.ui.text.folding.IJavaFoldingStructureProviderExtension#
+	 * expandElements(org.eclipse.jdt.core.IJavaElement[])
 	 */
 	@Override
 	public final void expandElements(IJavaElement[] elements) {
-		Set<IJavaElement> set= new HashSet<>(Arrays.asList(elements));
+		Set<IJavaElement> set = new HashSet<>(Arrays.asList(elements));
 		modifyFiltered(new JavaElementSetFilter(set, true), true);
 	}
 
@@ -1781,23 +2233,23 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 	 * Collapses or expands all annotations matched by the passed filter.
 	 *
 	 * @param filter the filter to use to select which annotations to collapse
-	 * @param expand <code>true</code> to expand the matched annotations, <code>false</code> to
-	 *        collapse them
+	 * @param expand <code>true</code> to expand the matched annotations,
+	 *               <code>false</code> to collapse them
 	 */
 	private void modifyFiltered(Filter filter, boolean expand) {
 		if (!isInstalled())
 			return;
 
-		ProjectionAnnotationModel model= getModel();
+		ProjectionAnnotationModel model = getModel();
 		if (model == null)
 			return;
 
-		List<JavaProjectionAnnotation> modified= new ArrayList<>();
-		Iterator<Annotation> iter= model.getAnnotationIterator();
+		List<JavaProjectionAnnotation> modified = new ArrayList<>();
+		Iterator<Annotation> iter = model.getAnnotationIterator();
 		while (iter.hasNext()) {
-			Object annotation= iter.next();
+			Object annotation = iter.next();
 			if (annotation instanceof JavaProjectionAnnotation) {
-				JavaProjectionAnnotation java= (JavaProjectionAnnotation) annotation;
+				JavaProjectionAnnotation java = (JavaProjectionAnnotation) annotation;
 
 				if (expand == java.isCollapsed() && filter.match(java)) {
 					if (expand)
@@ -1813,5 +2265,4 @@ public class AnnotationFoldingStructureProvider implements IJavaFoldingStructure
 		model.modifyAnnotations(null, null, modified.toArray(new Annotation[modified.size()]));
 	}
 
-	
 }
