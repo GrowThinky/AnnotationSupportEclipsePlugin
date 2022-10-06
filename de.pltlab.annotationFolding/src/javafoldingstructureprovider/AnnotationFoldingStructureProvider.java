@@ -863,8 +863,38 @@ public class AnnotationFoldingStructureProvider
 					return new IRegion[] { new Region(start, end - start) };
 
 				} else {
+					
+					IAnnotation annotation = annotations[annotationGroupings[0]];
+					
+					
+					 
+						ISourceRange sourceRange = annotation.getSourceRange();
+						IScanner scanner = ToolFactory.createScanner(true, false, false, true);
+						scanner.setSource(annotation.getSource().toCharArray());
 
-					complexFolding(toHide, annotations, regions, maxLength);
+						int start = sourceRange.getOffset();
+						int argStart = start;
+						int argEnd = start;
+
+						// find "(" and ")" token positions
+						int token = -1;
+						boolean startFound = false;
+						while (token != ITerminalSymbols.TokenNameEOF) {
+							token = scanner.getNextToken();
+							if(!startFound && token == ITerminalSymbols.TokenNameLPAREN) {
+								argStart= start + scanner.getCurrentTokenEndPosition() +1;
+								startFound = true;
+							} 
+							if(startFound && token == ITerminalSymbols.TokenNameRPAREN) {
+								argEnd = start + scanner.getCurrentTokenEndPosition();
+							}
+						}
+						return new IRegion[] {new Region(argStart, argEnd - argStart+1)};
+						
+						
+					
+
+					//complexFolding(toHide, annotations, regions, maxLength);
 
 				}
 
@@ -1043,14 +1073,14 @@ public class AnnotationFoldingStructureProvider
 								argEnd = start + scanner.getCurrentTokenEndPosition();
 							}
 						}
-						regionsArrayList.add(new Region(argStart, argEnd - argStart));
+						regionsArrayList.add(new Region(argStart, argEnd - argStart+1));  // +1 to hide closing parenthesis 
 						
 						//TODO: adding the region for the newlineRange causes problems with line numbers
-						regionsArrayList.add(new Region(argEnd+1, 1));
+						//regionsArrayList.add(new Region(argEnd+1, 1));
 						
 					}
 					// removing region for last inlineAnnotation
-					regionsArrayList.remove(regionsArrayList.size()-1);
+					//regionsArrayList.remove(regionsArrayList.size()-1);
 					
 					 regions = new IRegion[regionsArrayList.size()];
 					 for(int i=0;i<regions.length;i++) {
@@ -1070,6 +1100,7 @@ public class AnnotationFoldingStructureProvider
 
 		}
 
+		//old Complex folding strategy
 		private void complexFolding(ArrayList<String> toHide, IAnnotation[] annotations, IRegion[] regions,
 				int maxLength) throws JavaModelException, InvalidInputException {
 			for (int i = 0; i < annotations.length; i++) {
