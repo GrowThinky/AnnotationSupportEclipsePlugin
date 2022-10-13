@@ -34,5 +34,13 @@
          </contentTypeBinding>
       </editor>
    </extension>
+   <extension
+         point="org.eclipse.jdt.core.javaFormatter">
+      <javaFormatter
+            class="de.pltlab.annotationfolding.CodeFormatter:1"
+            id="de.pltlab.annotationFolding.javaFormatter1"
+            name="name">
+      </javaFormatter>
+   </extension>
 
 </plugin>
