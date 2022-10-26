@@ -1078,6 +1078,7 @@ public class AnnotationFoldingStructureProvider
 						//TODO: adding the region for the newlineRange causes problems with line numbers
 						//regionsArrayList.add(new Region(argEnd+1, 1));
 						
+						
 					}
 					// removing region for last inlineAnnotation
 					//regionsArrayList.remove(regionsArrayList.size()-1);
