@@ -657,153 +657,6 @@ public class AnnotationFoldingStructureProvider
 
 	}
 
-	private static final class AnnotationPosition extends Position implements IProjectionPosition {
-
-		private IMember fMember;
-		boolean foldAll;
-		FoldingStructureComputationContext ctx;
-		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-				"de.pltlab.annotationFolding");
-		String annotationsToHide = scopedPreferenceStore.getString("TO_HIDE");
-
-		public AnnotationPosition(int offset, int length, IMember member, boolean foldAll,
-				FoldingStructureComputationContext ctx) {
-			super(offset, length);
-			Assert.isNotNull(member);
-			fMember = member;
-			this.foldAll = foldAll;
-			this.ctx = ctx;
-
-		}
-
-		public void setMember(IMember member) {
-			Assert.isNotNull(member);
-			fMember = member;
-		}
-
-		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
-		 * computeFoldingRegions(org.eclipse.jface.text.IDocument)
-		 */
-		@Override
-		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
-
-			ArrayList<String> toHide = new ArrayList<String>();
-			toHide.add(annotationsToHide); // TODO: split() to support multiple
-			IAnnotation[] annotations = new IAnnotation[0];
-			IRegion[] regions = null;
-			IAnnotatable method = (IAnnotatable) fMember;
-
-			int maxLength = 40;
-
-			// ONSOM
-			int offSet = 0;
-
-			try {
-
-				int memberNameStart = fMember.getNameRange().getOffset();
-
-				annotations = method.getAnnotations();
-				regions = new IRegion[annotations.length];
-
-				if (foldAll) {
-
-					int start = annotations[0].getSourceRange().getOffset(); // -2 for multiple ... to change back.
-					int end = document.getLineOffset(document.getLineOfOffset(memberNameStart)) - 1;
-
-					return new IRegion[] { new Region(start, end - start) };
-
-				} else {
-
-					complexFolding(toHide, annotations, regions, maxLength);
-
-				}
-
-			} catch (JavaModelException | InvalidInputException e) {
-
-			}
-
-			return regions;
-
-		}
-
-		private void complexFolding(ArrayList<String> toHide, IAnnotation[] annotations, IRegion[] regions,
-				int maxLength) throws JavaModelException, InvalidInputException {
-			for (int i = 0; i < annotations.length; i++) {
-
-				IAnnotation annotation = annotations[i];
-
-				ISourceRange nameRange = annotation.getNameRange();
-				ISourceRange sourceRange = annotation.getSourceRange();
-
-				int sourceEnd = sourceRange.getOffset() + sourceRange.getLength();
-
-				int peekLength = 0;
-				if (sourceRange.getLength() > maxLength) {
-					peekLength = maxLength;
-
-					IScanner scanner = ToolFactory.createScanner(true, false, false, true);
-					scanner.setSource(annotation.getSource().toCharArray());
-
-					int start = sourceRange.getOffset();
-					int cutOff = start;
-
-					ArrayList<Integer> tokenEnds = new ArrayList<Integer>();
-
-					// find token-end closest to peek cutoff
-					int token = -1;
-					while (token != ITerminalSymbols.TokenNameEOF) {
-						token = scanner.getNextToken();
-						tokenEnds.add(scanner.getCurrentTokenEndPosition());
-					}
-
-					for (int x : tokenEnds) {
-						if (x > (peekLength)) {
-							peekLength = x + 1;
-							break;
-						}
-
-					}
-				}
-
-				// hide entire annotation if in toHide list
-				if (toHide.contains(annotation.getElementName())) {
-					regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
-				} else {
-					// else hide portion after cutoff
-					if (peekLength != 0) {
-						regions[i] = new Region(sourceRange.getOffset() + peekLength,
-								sourceRange.getLength() - peekLength);
-
-					} else {
-						// dummy region
-						regions[i] = new Region(sourceRange.getOffset() + sourceRange.getLength(), 0);
-					}
-				}
-			}
-		}
-
-		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
-		 * computeCaptionOffset(org.eclipse.jface.text.IDocument)
-		 */
-		@Override
-		public int computeCaptionOffset(IDocument document) throws BadLocationException {
-			int nameStart = offset;
-			try {
-				// need a reconcile here?
-				ISourceRange nameRange = fMember.getNameRange();
-				if (nameRange != null)
-					nameStart = nameRange.getOffset();
-			} catch (JavaModelException e) {
-				// ignore and use default
-			}
-
-			return nameStart - offset;
-		}
-
-	}
-
 	private static final class AnnotationBlockPosition extends Position implements IProjectionPosition {
 
 		private IMember fMember;
@@ -1236,7 +1089,7 @@ public class AnnotationFoldingStructureProvider
 	private int[] lineLengthOfAnnotation;
 	private int[] lengthOfAnnotation;
 	private ISourceRange[] rangeOfAnnotation;
-	private ISourceRange rangeOfMethod;
+	private ISourceRange rangeOfMember;
 	private int methodOffset;
 	private int methodLength;
 
@@ -1250,7 +1103,8 @@ public class AnnotationFoldingStructureProvider
 	private boolean complexAnnotationFolding = true;
 
 	private int numberOfAnnotationRanges = 0;
-	private IJavaElement member;
+	private IJavaElement javaElement;
+	private IMember currentMember;
 
 	/* filters */
 	/** Member filter, matches nested members (but not top-level types). */
@@ -1586,10 +1440,12 @@ public class AnnotationFoldingStructureProvider
 		boolean collapse = false;
 		boolean collapseCode = true;
 		isAnnotated = false;
-		member = element;
-
-		System.out.println(element.getElementType());
-
+		javaElement = element;
+		
+		if(javaElement instanceof IMember) {
+			currentMember = (IMember) javaElement;
+		}
+		
 		switch (element.getElementType()) {
 
 		case IJavaElement.IMPORT_CONTAINER:
@@ -1604,13 +1460,13 @@ public class AnnotationFoldingStructureProvider
 			IAnnotatable method = (IAnnotatable) element;
 			annotations = method.getAnnotations();
 			ISourceReference m = (ISourceReference) (IMethod) element;
-			rangeOfMethod = m.getSourceRange();
+			rangeOfMember = m.getSourceRange();
 
 			if (annotations.length > 0) {
 				isAnnotated = true;
 				collectAnnotationInformation(annotations);
 			}
-
+			
 			collapse = ctx.collapseMembers();
 			break;
 		case IJavaElement.FIELD:
@@ -1838,8 +1694,8 @@ public class AnnotationFoldingStructureProvider
 					for (int i = 0; i < isInline.length; i++) {
 						if (!isInline[i]) {
 							aStart = document.getLineOffset(document.getLineOfOffset(rangeOfAnnotation[i].getOffset()));
-//							aEnd = document.getLineOffset(
-//									document.getLineOfOffset(rangeOfAnnotation[i].getOffset() + lengthOfAnnotation[i]));
+		//					aEnd = document.getLineOffset(
+		//							document.getLineOfOffset(rangeOfAnnotation[i].getOffset() + lengthOfAnnotation[i]));
 			
 							aEnd = getEndOffset(document, i);
 								
@@ -1869,16 +1725,14 @@ public class AnnotationFoldingStructureProvider
 					}
 				}
 
-				int methodStart = rangeOfAnnotation[rangeOfAnnotation.length - 1].getOffset()
-						+ rangeOfAnnotation[rangeOfAnnotation.length - 1].getLength() + 3;
-				int methodEnd = methodStart + (rangeOfMethod.getLength() - (methodStart - rangeOfMethod.getOffset()));
-				int methodLength = methodEnd - methodStart;
-
-				// add method region
-				regions.add(new Region(methodStart, methodLength - 2));
+				int memberStart = document.getLineOffset(document.getLineOfOffset(currentMember.getNameRange().getOffset()));
+				int memberEnd =  currentMember.getSourceRange().getOffset() + currentMember.getSourceRange().getLength();
+				
+				// add member region
+				regions.add(new Region(memberStart, memberEnd - memberStart - 2));
 
 			} else {
-				// method without multiple line annotations
+				// member without multiple line annotations
 				regions.add(new Region(start, shift + range.getLength() - start));
 
 			}
@@ -1892,18 +1746,16 @@ public class AnnotationFoldingStructureProvider
 	}
 
 	/*
-	 * Calculates the annotation range's end offset from the following annotation or the member start.
+	 * Calculates the annotation range's end offset from the following element -- either an annotation or the member.
 	 */
 	private int getEndOffset(IDocument document, int i) throws BadLocationException, JavaModelException {
 		int end = -1;
-		// next element is annotation
+		// next element is another annotation
 		if (annotations.length > i + 1) {
 			end = document.getLineOffset(
-					document.getLineOfOffset(rangeOfAnnotation[i].getOffset())) - 1;
+					document.getLineOfOffset(rangeOfAnnotation[i+1].getOffset())) - 1;
 			// next element is member
 		} else {
-			
-			IMember currentMember = (IMember) member;
 			end = document.getLineOffset(
 					document.getLineOfOffset(currentMember.getNameRange().getOffset())) - 1;
 		}
