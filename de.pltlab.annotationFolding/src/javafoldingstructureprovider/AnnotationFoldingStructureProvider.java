@@ -1625,8 +1625,7 @@ public class AnnotationFoldingStructureProvider
 		if (regions.length > 0) {
 			// comments
 			for (int i = 0; i < regions.length - (numberOfAnnotationRanges + 1); i++) {
-				// IRegion normalized= alignRegion(regions[i], ctx);
-				IRegion normalized = regions[i];
+				IRegion normalized= alignRegion(regions[i], ctx);
 
 				if (normalized != null) {
 					Position position = createCommentPosition(normalized, false);
@@ -1642,8 +1641,8 @@ public class AnnotationFoldingStructureProvider
 				}
 
 			}
-			// annotations  //TODO: simplify condition below. 
-			if (numberOfAnnotationRanges > 0 && isAnnotated && isLongAnnotation()) {
+			// annotations 
+			if (numberOfAnnotationRanges > 0 ) {
 
 				for (int i = regions.length - (numberOfAnnotationRanges + 1); i < regions.length - 1; i++) {
 					IRegion region =  regions[i];
