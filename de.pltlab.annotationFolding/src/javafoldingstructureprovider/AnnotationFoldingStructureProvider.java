@@ -1250,6 +1250,7 @@ public class AnnotationFoldingStructureProvider
 	private boolean complexAnnotationFolding = true;
 
 	private int numberOfAnnotationRanges = 0;
+	private IJavaElement member;
 
 	/* filters */
 	/** Member filter, matches nested members (but not top-level types). */
@@ -1585,6 +1586,7 @@ public class AnnotationFoldingStructureProvider
 		boolean collapse = false;
 		boolean collapseCode = true;
 		isAnnotated = false;
+		member = element;
 
 		System.out.println(element.getElementType());
 
@@ -1607,7 +1609,6 @@ public class AnnotationFoldingStructureProvider
 			if (annotations.length > 0) {
 				isAnnotated = true;
 				collectAnnotationInformation(annotations);
-
 			}
 
 			collapse = ctx.collapseMembers();
@@ -1643,7 +1644,6 @@ public class AnnotationFoldingStructureProvider
 			}
 			// annotations 
 			if (numberOfAnnotationRanges > 0 ) {
-
 				for (int i = regions.length - (numberOfAnnotationRanges + 1); i < regions.length - 1; i++) {
 					IRegion region =  regions[i];
 					Position position = null;
@@ -1661,9 +1661,7 @@ public class AnnotationFoldingStructureProvider
 									position);
 						}
 					}
-
 				}
-
 				// addCombinedAnnotationRegion(element, ctx, regions);
 			}
 
@@ -1820,7 +1818,6 @@ public class AnnotationFoldingStructureProvider
 
 				// addMultipleAnnotationRanges(regions, start);
 				// TODO: add AnnotatonInfo class?
-				
 				if (complexAnnotationFolding) {
 					Boolean[] isInline = new Boolean[annotations.length];
 					for (int i = 0; i < lineLengthOfAnnotation.length; i++) {
@@ -1837,15 +1834,20 @@ public class AnnotationFoldingStructureProvider
 					int lastInlineAnnotation = 0;
 					int[] annotationGrouping;
 					
+					// block annotations
 					for (int i = 0; i < isInline.length; i++) {
 						if (!isInline[i]) {
 							aStart = document.getLineOffset(document.getLineOfOffset(rangeOfAnnotation[i].getOffset()));
-							aEnd = document.getLineOffset(
-									document.getLineOfOffset(rangeOfAnnotation[i].getOffset() + lengthOfAnnotation[i]));
-							annotationGrouping = new int[] {i} ;
-							regions.add(new AnnotationRegion(aStart, aEnd - aStart, false, annotationGrouping ));
+//							aEnd = document.getLineOffset(
+//									document.getLineOfOffset(rangeOfAnnotation[i].getOffset() + lengthOfAnnotation[i]));
+			
+							aEnd = getEndOffset(document, i);
+								
+							annotationGrouping = new int[] { i };
+							regions.add(new AnnotationRegion(aStart, aEnd - aStart, false, annotationGrouping));
 							numberOfAnnotationRanges++;
 							
+							// in-line annotations
 						} else {
 							boolean inlineGroup = false;
 							firstInlineAnnotation = i;
@@ -1856,13 +1858,13 @@ public class AnnotationFoldingStructureProvider
 								aEnd = document.getLineOffset(document
 										.getLineOfOffset(rangeOfAnnotation[i].getOffset() + lengthOfAnnotation[i]) + 1)
 										- 1;
-								lastInlineAnnotation = i;	
+								lastInlineAnnotation = i;
 							}
 							if (inlineGroup) {
-								annotationGrouping = new int[] {firstInlineAnnotation,lastInlineAnnotation};
+								annotationGrouping = new int[] { firstInlineAnnotation, lastInlineAnnotation };
 								regions.add(new AnnotationRegion(aStart, aEnd - aStart, true, annotationGrouping));
 								numberOfAnnotationRanges++;
-								}
+							}
 						}
 					}
 				}
@@ -1887,6 +1889,26 @@ public class AnnotationFoldingStructureProvider
 		}
 
 		return new IRegion[0];
+	}
+
+	/*
+	 * Calculates the annotation range's end offset from the following annotation or the member start.
+	 */
+	private int getEndOffset(IDocument document, int i) throws BadLocationException, JavaModelException {
+		int end = -1;
+		// next element is annotation
+		if (annotations.length > i + 1) {
+			end = document.getLineOffset(
+					document.getLineOfOffset(rangeOfAnnotation[i].getOffset())) - 1;
+			// next element is member
+		} else {
+			
+			IMember currentMember = (IMember) member;
+			end = document.getLineOffset(
+					document.getLineOfOffset(currentMember.getNameRange().getOffset())) - 1;
+		}
+
+		return end;
 	}
 
 	private boolean isLongAnnotation() {
