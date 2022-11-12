@@ -1231,7 +1231,8 @@ public class AnnotationFoldingStructureProvider
 	private IJavaElement fInput;
 	private IElementChangedListener fElementListener;
 
-	private Boolean annotation;
+	private Boolean isAnnotated;
+	IAnnotation[] annotations = new IAnnotation[0];
 	private int[] lineLengthOfAnnotation;
 	private int[] lengthOfAnnotation;
 	private ISourceRange[] rangeOfAnnotation;
@@ -1580,11 +1581,10 @@ public class AnnotationFoldingStructureProvider
 	@SuppressWarnings({ "restriction", "unused" })
 	protected void computeFoldingStructure(IJavaElement element, FoldingStructureComputationContext ctx)
 			throws JavaModelException {
-
-		IAnnotation[] annotations = new IAnnotation[1];
+		
 		boolean collapse = false;
 		boolean collapseCode = true;
-		annotation = false;
+		isAnnotated = false;
 
 		System.out.println(element.getElementType());
 
@@ -1605,29 +1605,8 @@ public class AnnotationFoldingStructureProvider
 			rangeOfMethod = m.getSourceRange();
 
 			if (annotations.length > 0) {
-				annotation = true;
-
-				// collect annotation length information
-				lineLengthOfAnnotation = new int[annotations.length];
-				lengthOfAnnotation = new int[annotations.length];
-				rangeOfAnnotation = new ISourceRange[annotations.length];
-
-				for (int i = 0; i < annotations.length; i++) {
-					lineLengthOfAnnotation[i] = (int) annotations[i].getSource().lines().count();
-					lengthOfAnnotation[i] = annotations[i].getSource().length();
-					rangeOfAnnotation[i] = annotations[i].getSourceRange();
-				}
-
-				// number of AnnotationRanges in compute ProjectionRang
-//				if (IntStream.of(lineLengthOfAnnotation).sum() > 1) {
-//					if (complexAnnotationFolding) {
-//						numberOfAnnotationRanges = 2;
-//					} else {
-//						numberOfAnnotationRanges = 1;
-//					}
-//				} else {
-//					numberOfAnnotationRanges = 0;
-//				}
+				isAnnotated = true;
+				collectAnnotationInformation(annotations);
 
 			}
 
@@ -1664,7 +1643,7 @@ public class AnnotationFoldingStructureProvider
 
 			}
 			// annotations  //TODO: simplify condition below. 
-			if (numberOfAnnotationRanges > 0 && annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
+			if (numberOfAnnotationRanges > 0 && isAnnotated && isLongAnnotation()) {
 
 				for (int i = regions.length - (numberOfAnnotationRanges + 1); i < regions.length - 1; i++) {
 					IRegion region =  regions[i];
@@ -1700,6 +1679,19 @@ public class AnnotationFoldingStructureProvider
 						ctx.addProjectionRange(new JavaProjectionAnnotation(collapse, element, false), position);
 				}
 			}
+		}
+	}
+
+	private void collectAnnotationInformation(IAnnotation[] annotations) throws JavaModelException {
+		// collect annotation length information
+		lineLengthOfAnnotation = new int[annotations.length];
+		lengthOfAnnotation = new int[annotations.length];
+		rangeOfAnnotation = new ISourceRange[annotations.length];
+
+		for (int i = 0; i < annotations.length; i++) {
+			lineLengthOfAnnotation[i] = (int) annotations[i].getSource().lines().count();
+			lengthOfAnnotation[i] = annotations[i].getSource().length();
+			rangeOfAnnotation[i] = annotations[i].getSourceRange();
 		}
 	}
 
@@ -1823,23 +1815,20 @@ public class AnnotationFoldingStructureProvider
 				break;
 			}
 
-			if (annotation && IntStream.of(lineLengthOfAnnotation).sum() > 1) {
-
+			if (isAnnotated && isLongAnnotation()) {
+				
 				IDocument document = ctx.getDocument();
 
 				// addMultipleAnnotationRanges(regions, start);
-
 				// TODO: add AnnotatonInfo class?
+				
 				if (complexAnnotationFolding) {
-					
-
-					Boolean[] inline = new Boolean[lineLengthOfAnnotation.length];
-
+					Boolean[] isInline = new Boolean[annotations.length];
 					for (int i = 0; i < lineLengthOfAnnotation.length; i++) {
 						if (lineLengthOfAnnotation[i] > 1) {
-							inline[i] = false;
+							isInline[i] = false;
 						} else {
-							inline[i] = true;
+							isInline[i] = true;
 						}
 					}
 
@@ -1849,8 +1838,8 @@ public class AnnotationFoldingStructureProvider
 					int lastInlineAnnotation = 0;
 					int[] annotationGrouping;
 					
-					for (int i = 0; i < inline.length; i++) {
-						if (!inline[i]) {
+					for (int i = 0; i < isInline.length; i++) {
+						if (!isInline[i]) {
 							aStart = document.getLineOffset(document.getLineOfOffset(rangeOfAnnotation[i].getOffset()));
 							aEnd = document.getLineOffset(
 									document.getLineOfOffset(rangeOfAnnotation[i].getOffset() + lengthOfAnnotation[i]));
@@ -1862,7 +1851,7 @@ public class AnnotationFoldingStructureProvider
 							boolean inlineGroup = false;
 							firstInlineAnnotation = i;
 							aStart = document.getLineOffset(document.getLineOfOffset(rangeOfAnnotation[i].getOffset()));
-							while (i + 1 < inline.length && inline[i + 1]) {
+							while (i + 1 < isInline.length && isInline[i + 1]) {
 								inlineGroup = true;
 								i++;
 								aEnd = document.getLineOffset(document
@@ -1878,8 +1867,7 @@ public class AnnotationFoldingStructureProvider
 						}
 					}
 				}
-				System.out.println("Ranges: "+ numberOfAnnotationRanges);
-				//regions.add(new Region(rangeOfAnnotation[0].getOffset(), IntStream.of(lengthOfAnnotation).sum()));
+
 				int methodStart = rangeOfAnnotation[rangeOfAnnotation.length - 1].getOffset()
 						+ rangeOfAnnotation[rangeOfAnnotation.length - 1].getLength() + 3;
 				int methodEnd = methodStart + (rangeOfMethod.getLength() - (methodStart - rangeOfMethod.getOffset()));
@@ -1900,6 +1888,10 @@ public class AnnotationFoldingStructureProvider
 		}
 
 		return new IRegion[0];
+	}
+
+	private boolean isLongAnnotation() {
+		return IntStream.of(lineLengthOfAnnotation).sum() > 1;
 	}
 
 	private void addMultipleAnnotationRanges(List<IRegion> regions, int start) {
