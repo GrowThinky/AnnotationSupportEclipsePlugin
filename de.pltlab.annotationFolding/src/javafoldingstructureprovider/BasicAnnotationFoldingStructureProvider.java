@@ -476,6 +476,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			 */
 			@Override
 			public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
+				@SuppressWarnings("restriction")
 				DocumentCharacterIterator sequence= new DocumentCharacterIterator(document, offset, offset + length);
 				int prefixEnd= 0;
 				int contentStart= findFirstContent(sequence, prefixEnd);
