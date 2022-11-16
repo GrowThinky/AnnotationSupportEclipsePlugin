@@ -26,7 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -759,61 +758,6 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 				return 0;
 			}
 
-			private void complexFolding(ArrayList<String> toHide, IAnnotation[] annotations, IRegion[] regions,
-					int maxLength) throws JavaModelException, InvalidInputException {
-				for (int i = 0; i < annotations.length; i++) {
-
-					IAnnotation annotation = annotations[i];
-
-					ISourceRange nameRange = annotation.getNameRange();
-					ISourceRange sourceRange = annotation.getSourceRange();
-
-					int sourceEnd = sourceRange.getOffset() + sourceRange.getLength();
-
-					int peekLength = 0;
-					if (sourceRange.getLength() > maxLength) {
-						peekLength = maxLength;
-
-						IScanner scanner = ToolFactory.createScanner(true, false, false, true);
-						scanner.setSource(annotation.getSource().toCharArray());
-
-						int start = sourceRange.getOffset();
-						int cutOff = start;
-
-						ArrayList<Integer> tokenEnds = new ArrayList<Integer>();
-
-						// find token-end closest to peek cutoff
-						int token = -1;
-						while (token != ITerminalSymbols.TokenNameEOF) {
-							token = scanner.getNextToken();
-							tokenEnds.add(scanner.getCurrentTokenEndPosition());
-						}
-
-						for (int x : tokenEnds) {
-							if (x > (peekLength)) {
-								peekLength = x + 1;
-								break;
-							}
-
-						}
-					}
-
-					// hide entire annotation if in toHide list
-					if (toHide.contains(annotation.getElementName())) {
-						regions[i] = new Region(sourceRange.getOffset() - 2, sourceRange.getLength() + 2);
-					} else {
-						// else hide portion after cutoff
-						if (peekLength != 0) {
-							regions[i] = new Region(sourceRange.getOffset() + peekLength,
-									sourceRange.getLength() - peekLength);
-
-						} else {
-							// dummy region
-							regions[i] = new Region(sourceRange.getOffset() + sourceRange.getLength(), 0);
-						}
-					}
-				}
-			}
 
 			/*
 			 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
@@ -894,17 +838,14 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		private boolean fCollapseMembers= false;
 		private boolean fCollapseHeaderComments= true;
 		private boolean fCollapseAnnotations = false;
-		private boolean complexAnnotationFolding = true;
+		
 		
 		/* annotation folding variables */
-		private Boolean isAnnotated;
+		private Boolean performAnnotationFolding;
 		IAnnotation[] annotations = new IAnnotation[0];
 		private int[] lineLengthOfAnnotation;
 		private int[] lengthOfAnnotation;
 		private ISourceRange[] rangeOfAnnotation;
-		private ISourceRange rangeOfMember;
-		private int methodOffset;
-		private int methodLength;
 		private int numberOfAnnotationRanges;
 
 		/* filters */
@@ -1082,7 +1023,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			
 			ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 					"de.pltlab.annotationFolding");
-			complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
+			//complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
 			fCollapseAnnotations = scopedPreferenceStore.getBoolean("INITIAL_FOLD");
 		}
 
@@ -1216,7 +1157,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 
 			boolean collapse= false;
 			boolean collapseCode= true;
-			isAnnotated = false;
+			performAnnotationFolding = false;
 			
 			switch (element.getElementType()) {
 
@@ -1235,9 +1176,20 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 				default:
 					return;
 			}
-			
-			if(element instanceof IAnnotatable) {
-				isAnnotated= true;
+
+			if (element instanceof IAnnotatable) {
+				try {
+					IAnnotatable member = (IAnnotatable) element;
+					annotations = member.getAnnotations();
+					collectAnnotationInformation(annotations);
+					
+				} catch (JavaModelException e) {
+				}
+				
+				if(containsLongAnnotation()) {
+					performAnnotationFolding = true;
+				}
+
 			}
 
 			IRegion[] regions= computeProjectionRanges((ISourceReference) element, ctx);
@@ -1263,7 +1215,6 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 				// annotations
 				if (numberOfAnnotationRanges > 0) {
 					for (int i = regions.length - (numberOfAnnotationRanges + 1); i < regions.length - 1; i++) {
-						IRegion region = regions[i];
 						Position position = null;
 						IRegion normalized =  alignRegion(regions[i], ctx);
 						if (normalized != null) {
@@ -1332,6 +1283,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		 */
 		protected final IRegion[] computeProjectionRanges(ISourceReference reference, FoldingStructureComputationContext ctx) {
 			numberOfAnnotationRanges = 0;
+			IDocument document = null;
 			try {
 					ISourceRange range= reference.getSourceRange();
 					if (!SourceRange.isAvailable(range))
@@ -1355,7 +1307,6 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 					IScanner scanner= ctx.getScanner();
 					scanner.resetTo(shift, shift + range.getLength());
 					
-					int finalCommentLineOffset;
 					int memberStart = 0;
 					int memberEnd = 0;
 					
@@ -1372,7 +1323,6 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 							case ITerminalSymbols.TokenNameCOMMENT_BLOCK: {
 								int end= scanner.getCurrentTokenEndPosition() + 1;
 								regions.add(new Region(start, end - start));
-								finalCommentLineOffset = ctx.fDocument.getLineInformationOfOffset(end).getOffset();
 								continue;
 							}
 							case ITerminalSymbols.TokenNameCOMMENT_LINE:
@@ -1382,16 +1332,8 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 						break;
 					}
 
-					IDocument document = null;
-					
-					if(isAnnotated) {
+					if (performAnnotationFolding) {
 						document = ctx.getDocument();
-						IAnnotatable member = (IAnnotatable) reference;
-						annotations = member.getAnnotations();
-						collectAnnotationInformation(annotations);
-					}
-					
-					if (isAnnotated && containsLongAnnotation()) {
 						for (int i = 0; i < annotations.length; i++) {
 							if (lineLengthOfAnnotation[i] > 1) {
 								regions.add(
@@ -1407,16 +1349,17 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 								.getLineOffset(document.getLineOfOffset(reference.getNameRange().getOffset()));
 						 memberEnd = reference.getSourceRange().getOffset()
 								+ reference.getSourceRange().getLength();
+						 
 
 						 if(annotationStart != -1 && annotationStart < memberStart) {
 							 memberStart = annotationStart;
 						 }
 							 
-					// add member region
-					regions.add(new Region(memberStart, memberEnd - memberStart - 2));
+					// member region below annotation folding block
+					regions.add(new Region(memberStart, memberEnd - memberStart));
 						
 					} else {
-						// member without multiple line annotations
+						// member region without separate annotation folding
 						regions.add(new Region(start, shift + range.getLength() - start));
 					}
 
@@ -1430,11 +1373,9 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		}
 		
 		private void collectAnnotationInformation(IAnnotation[] annotations) throws JavaModelException {
-			
 			lineLengthOfAnnotation = new int[annotations.length];
 			lengthOfAnnotation = new int[annotations.length];
 			rangeOfAnnotation = new ISourceRange[annotations.length];
-
 			for (int i = 0; i < annotations.length; i++) {
 				lineLengthOfAnnotation[i] = (int) annotations[i].getSource().lines().count();
 				lengthOfAnnotation[i] = annotations[i].getSource().length();
