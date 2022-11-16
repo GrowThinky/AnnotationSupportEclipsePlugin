@@ -685,19 +685,18 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			 */
 			@Override
 			public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
-				
-				int captionLine= document.getLineOfOffset(offset);
-				int lastLine= document.getLineOfOffset(offset + length);
+
+				int captionLine = document.getLineOfOffset(offset);
+				int lastLine = document.getLineOfOffset(offset + length);
 
 				if (captionLine < lastLine) {
-					int postOffset= document.getLineOffset(captionLine + 1);
-					int postLength= offset + length - postOffset;
-					if (postLength > 0) {
-						IRegion postRegion= new Region(postOffset, postLength);
-						return new IRegion[] { postRegion };
+					int annotationOffset = document.getLineOffset(captionLine + 1);
+					int annotationLength = offset + length - annotationOffset;
+					if (annotationLength > 0) {
+						IRegion annotationRegion = new Region(annotationOffset, annotationLength);
+						return new IRegion[] { annotationRegion };
 					}
 				}
-
 				return null;
 			}
 		
@@ -1124,14 +1123,13 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 					IAnnotatable member = (IAnnotatable) element;
 					annotations = member.getAnnotations();
 					collectAnnotationInformation(annotations);
-					
+
+					if (containsLongAnnotation()) {
+						performAnnotationFolding = true;
+					}
+
 				} catch (JavaModelException e) {
 				}
-				
-				if(containsLongAnnotation()) {
-					performAnnotationFolding = true;
-				}
-
 			}
 
 			IRegion[] regions= computeProjectionRanges((ISourceReference) element, ctx);
@@ -1224,8 +1222,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		 * @return the regions to be folded
 		 */
 		protected final IRegion[] computeProjectionRanges(ISourceReference reference, FoldingStructureComputationContext ctx) {
-			numberOfAnnotationRanges = 0;
-			IDocument document = null;
+		
 			try {
 					ISourceRange range= reference.getSourceRange();
 					if (!SourceRange.isAvailable(range))
@@ -1249,10 +1246,12 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 					IScanner scanner= ctx.getScanner();
 					scanner.resetTo(shift, shift + range.getLength());
 					
+					// annotation folding 
 					int memberStart = 0;
-					int memberEnd = 0;
-					
+					int memberEnd = 0;	
 					int annotationStart = -1;
+					numberOfAnnotationRanges = 0;
+					IDocument document = null;
 
 					int start= shift;
 					while (true) {
@@ -1292,7 +1291,6 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 						 memberEnd = reference.getSourceRange().getOffset()
 								+ reference.getSourceRange().getLength();
 						 
-
 						 if(annotationStart != -1 && annotationStart < memberStart) {
 							 memberStart = annotationStart;
 						 }
@@ -1314,6 +1312,10 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			return new IRegion[0];
 		}
 		
+		/**
+		 * Collects range information about each of the element's annotations.
+		 * @param annotations annotations of an IAnnotable instance.
+		 */
 		private void collectAnnotationInformation(IAnnotation[] annotations) throws JavaModelException {
 			lineLengthOfAnnotation = new int[annotations.length];
 			lengthOfAnnotation = new int[annotations.length];
