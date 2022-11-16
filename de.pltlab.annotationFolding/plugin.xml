@@ -7,6 +7,10 @@
             class="javafoldingstructureprovider.AnnotationFoldingStructureProvider"
             id="de.pltlab.annotationFolding.AnnotationFoldingStructureProvider">
       </provider>
+      <provider
+            class="javafoldingstructureprovider.BasicAnnotationFoldingStructureProvider"
+            id="de.pltlab.annotationFolding.BasicAnnotationFolding">
+      </provider>
    </extension>
    <extension
          point="org.eclipse.ui.preferencePages">
