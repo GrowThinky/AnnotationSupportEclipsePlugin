@@ -665,16 +665,15 @@ public class AnnotationFoldingStructureProvider
 		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 				"de.pltlab.annotationFolding");
 		String annotationsToHide = scopedPreferenceStore.getString("TO_HIDE");
-		int[] annotationGroupings;
 		
-		public AnnotationBlockPosition(int offset, int length, IMember member, boolean foldAll,
-				int[] annotationGrouping, FoldingStructureComputationContext ctx) {
+		
+		public AnnotationBlockPosition(int offset, int length, IMember member, boolean foldAll, FoldingStructureComputationContext ctx) {
 			super(offset, length);
 			Assert.isNotNull(member);
 			fMember = member;
 			this.foldAll = foldAll;
 			this.ctx = ctx;
-			this.annotationGroupings = annotationGrouping;
+			
 
 		}
 
@@ -690,65 +689,53 @@ public class AnnotationFoldingStructureProvider
 		@Override
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
 
-			ArrayList<String> toHide = new ArrayList<String>();
-			toHide.add(annotationsToHide); // TODO: split() to support multiple
+			int captionLine = document.getLineOfOffset(offset);
+			int lastLine = document.getLineOfOffset(offset + length);
+			int lastLineEndOffset = document.getLineOffset(lastLine)-1;
 			
-			IAnnotation[] annotations = new IAnnotation[0];
-			IRegion[] regions = null;
-			IAnnotatable method = (IAnnotatable) fMember;
-			int memberNameStart;
-
-			int maxLength = 40;
-			int offSet = 0;
-
+			IScanner scanner = ToolFactory.createScanner(true, false, false, true);
+			System.out.println("BLOCK!!!");
+			
+			int shift;
+			int argStart;
+			int argEnd;
+			
 			try {
+				
+				scanner.setSource(document.get(offset, length).toCharArray());
 
-				memberNameStart = fMember.getNameRange().getOffset();
-				annotations = method.getAnnotations();
-				regions = new IRegion[annotations.length];
-
-				if (foldAll) {
-					int start = annotations[0].getSourceRange().getOffset(); 							// -2 for multiple ... to change back.
-					int end = document.getLineOffset(document.getLineOfOffset(memberNameStart)) - 1;
-					return new IRegion[] { new Region(start, end - start) };
+				// find "(" and ")" token offsets
+				shift = offset;
+				argStart = shift;
+				argEnd = shift;
+				
+				int token = -1;
+				boolean startFound = false;
+				while (token != ITerminalSymbols.TokenNameEOF && startFound == false) {
 					
-				} else {		
-					IAnnotation annotation = annotations[annotationGroupings[0]];
+						token = scanner.getNextToken();
 					
-						ISourceRange sourceRange = annotation.getSourceRange();
-						IScanner scanner = ToolFactory.createScanner(true, false, false, true);
-						scanner.setSource(annotation.getSource().toCharArray());
-
-						int start = sourceRange.getOffset();
-						int argStart = start;
-						int argEnd = start;
-
-						// find "(" and ")" token positions
-						int token = -1;
-						boolean startFound = false;
-						while (token != ITerminalSymbols.TokenNameEOF) {
-							token = scanner.getNextToken();
-							if(!startFound && token == ITerminalSymbols.TokenNameLPAREN) {
-								argStart= start + scanner.getCurrentTokenEndPosition() +1;
-								startFound = true;
-							} 
-							if(startFound && token == ITerminalSymbols.TokenNameRPAREN) {
-								argEnd = start + scanner.getCurrentTokenEndPosition();
-							}
-						}
-						return new IRegion[] {new Region(argStart, argEnd - argStart+1)};
-						
-					//complexFolding(toHide, annotations, regions, maxLength);
+					if (!startFound && token == ITerminalSymbols.TokenNameLPAREN) {
+						argStart = shift + scanner.getCurrentTokenEndPosition() + 1;
+						startFound = true;
+					}
 				}
-
-			} catch (JavaModelException | InvalidInputException e) {
-
+			
+			if (captionLine < lastLine) {
+				int annotationOffset = argStart;//document.getLineOffset(captionLine + 1);
+				int annotationLength = lastLineEndOffset - annotationOffset;
+				if (annotationLength > 0) {
+					IRegion annotationRegion = new Region(annotationOffset, annotationLength);
+					return new IRegion[] { annotationRegion };
+				}
 			}
-
-			return regions;
-
+			
+			} catch (InvalidInputException e) {
+				
+			}
+			return null;
 		}
-
+		
 		private void complexFolding(ArrayList<String> toHide, IAnnotation[] annotations, IRegion[] regions,
 				int maxLength) throws JavaModelException, InvalidInputException {
 			for (int i = 0; i < annotations.length; i++) {
@@ -825,31 +812,24 @@ public class AnnotationFoldingStructureProvider
 		}
 
 	}
+	
 
 	private static final class AnnotationInlinePosition extends Position implements IProjectionPosition {
 
 		private IMember fMember;
-		boolean foldAll;
 		FoldingStructureComputationContext ctx;
 		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 				"de.pltlab.annotationFolding");
 		String annotationsToHide = scopedPreferenceStore.getString("TO_HIDE");
-		int[] annotationGroupings;
+
 
 		public AnnotationInlinePosition(int offset, int length, IMember member, boolean foldAll,
 				int[] annotationGrouping, FoldingStructureComputationContext ctx) {
 			super(offset, length);
 			Assert.isNotNull(member);
 			fMember = member;
-			this.foldAll = foldAll;
 			this.ctx = ctx;
-			this.annotationGroupings = annotationGrouping;
-
-		}
-
-		public void setMember(IMember member) {
-			Assert.isNotNull(member);
-			fMember = member;
+			this.offset = offset;
 		}
 
 		/*
@@ -861,85 +841,50 @@ public class AnnotationFoldingStructureProvider
 
 			ArrayList<String> toHide = new ArrayList<String>();
 			toHide.add(annotationsToHide); // TODO: split() to support multiple
-			IAnnotation[] annotations = new IAnnotation[0];
-			IRegion[] regions = null;
-			IAnnotatable method = (IAnnotatable) fMember;
-			
+			IAnnotation[] annotations = null;
+			IRegion[] regions = null;	
 			ArrayList<IRegion> regionsArrayList = new ArrayList<IRegion>();
 			
-
-			int maxLength = 40;
-			int offSet = 0;
-
+			IScanner scanner = ToolFactory.createScanner(true, false, false, true);
+			System.out.println("INLINE!!");
+			
+			int shift;
+			int argStart;
+			int argEnd;
+			
 			try {
+				
+				scanner.setSource(document.get(offset, length).toCharArray());
 
-				int memberNameStart = fMember.getNameRange().getOffset();
-
-				annotations = method.getAnnotations();
-				regions = new IRegion[annotations.length];
-
-				if (foldAll) {
-					int start = annotations[0].getSourceRange().getOffset(); // -2 for multiple ... to change back.
-					int end = document.getLineOffset(document.getLineOfOffset(memberNameStart)) - 1;
-
-					return new IRegion[] { new Region(start, end - start) };
-
-				} else {
-						
-					IScanner scanner = ToolFactory.createScanner(true, false, false, true);
-					ISourceRange sourceRange;
-					int start;
-					int argStart;
-					int argEnd;
-					
-					ArrayList<IAnnotation> groupedAnnotations = new ArrayList<>();
-					
-					for(int i = annotationGroupings[0]; i <= annotationGroupings[1];i++ ) {
-						groupedAnnotations.add(annotations[i]);
-						annotations[i].getNameRange();
-					} 
-					
-					for(IAnnotation annotation : groupedAnnotations) {
-						
-						sourceRange = annotation.getSourceRange();
-						scanner.setSource(annotation.getSource().toCharArray());
-						start = sourceRange.getOffset();
-						argStart = start;
-						argEnd = start;
-
-						// find "(" and ")" token positions
-						int token = -1;
-						boolean startFound = false;
-						while (token != ITerminalSymbols.TokenNameEOF) {
-							token = scanner.getNextToken();
-							if(!startFound && token == ITerminalSymbols.TokenNameLPAREN) {
-								argStart= start + scanner.getCurrentTokenEndPosition() +1;
-								startFound = true;
-							} 
-							if(startFound && token == ITerminalSymbols.TokenNameRPAREN) {
-								argEnd = start + scanner.getCurrentTokenEndPosition();
-							}
-						}
-						regionsArrayList.add(new Region(argStart, argEnd - argStart+1));      // +1 to hide closing parenthesis 
-						
-						//TODO: adding the region for the newlineRange causes problems with line numbers
-						//regionsArrayList.add(new Region(argEnd+1, 1));
-						
+				// find "(" and ")" token offsets
+				shift = offset;
+				argStart = shift;
+				argEnd = shift;
+				
+				int token = -1;
+				boolean startFound = false;
+				while (token != ITerminalSymbols.TokenNameEOF) {
+					token = scanner.getNextToken();
+					if (!startFound && token == ITerminalSymbols.TokenNameLPAREN) {
+						argStart = shift + scanner.getCurrentTokenEndPosition() + 1;
+						startFound = true;
 					}
-					// removing region for last inlineAnnotation
-					//regionsArrayList.remove(regionsArrayList.size()-1);
-					
-					 regions = new IRegion[regionsArrayList.size()];
-					 for(int i=0;i<regions.length;i++) {
-						 regions[i] = regionsArrayList.get(i);
-					 }
-					 
-					 
-					//complexFolding(toHide, annotations, regions, maxLength);
-
+					if (startFound && token == ITerminalSymbols.TokenNameRPAREN) {
+						argEnd = shift + scanner.getCurrentTokenEndPosition();
+						regionsArrayList.add(new Region(argStart, argEnd - argStart ));    // +1 to hide closing
+				//		regionsArrayList.add(new Region(argEnd+1, 1));					  //TODO: adding the region for the newlineRange causes problems with line numbers and document's char-index to line mapping										
+						startFound = false;
+					}
 				}
 
-			} catch (JavaModelException | InvalidInputException e) {
+			//	regionsArrayList.remove(regionsArrayList.size()-1); // removing region for last inlineAnnotation 
+
+				regions = new IRegion[regionsArrayList.size()];
+				for (int i = 0; i < regions.length; i++) {
+					regions[i] = regionsArrayList.get(i);
+				}
+
+			} catch ( InvalidInputException e) {
 
 			}
 
@@ -1434,6 +1379,8 @@ public class AnnotationFoldingStructureProvider
 		
 		boolean collapse = false;
 		boolean collapseCode = true;
+		boolean annotationInitialCollapse = true;
+			
 		isAnnotated = false;
 		javaElement = element;
 		
@@ -1455,7 +1402,6 @@ public class AnnotationFoldingStructureProvider
 			if (element instanceof IAnnotatable) {
 				IAnnotatable method = (IAnnotatable) element;
 				annotations = method.getAnnotations();
-
 				if (annotations.length > 0) {
 					isAnnotated = true;
 					collectAnnotationInformation(annotations);
@@ -1495,19 +1441,18 @@ public class AnnotationFoldingStructureProvider
 			// annotations 
 			if (numberOfAnnotationRanges > 0 ) {
 				for (int i = regions.length - (numberOfAnnotationRanges + 1); i < regions.length - 1; i++) {
-					IRegion region =  regions[i];
 					Position position = null;
 					AnnotationRegion normalized =  (AnnotationRegion) alignRegion(regions[i], ctx);
 					if (normalized != null) {
 						if (normalized.inline) {
+							annotationInitialCollapse = false;
 							position = createAnnotationInlinePosition(normalized, (IMember) element, false, ctx);
 						} else {
+							annotationInitialCollapse = ctx.collapseAnnotations();
 							position = createAnnotationBlockPosition(normalized, (IMember) element, false, ctx);
 						}
 						if (position != null) {
-							boolean annotationCollapse;
-							annotationCollapse = ctx.collapseAnnotations();
-							ctx.addProjectionRange(new JavaProjectionAnnotation(annotationCollapse, element, true),
+							ctx.addProjectionRange(new JavaProjectionAnnotation(annotationInitialCollapse, element, true),
 									position);
 						}
 					}
@@ -1659,13 +1604,9 @@ public class AnnotationFoldingStructureProvider
 
 				break;
 			}
-
-			if (isAnnotated && isLongAnnotation()) {
-				
+			// java annotation ranges
+			if (isAnnotated && isLongAnnotation()) {		
 				IDocument document = ctx.getDocument();
-
-				// addMultipleAnnotationRanges(regions, start);
-				// TODO: add AnnotatonInfo class?
 				if (complexAnnotationFolding) {
 					Boolean[] isInline = new Boolean[annotations.length];
 					for (int i = 0; i < lineLengthOfAnnotation.length; i++) {
@@ -1675,39 +1616,32 @@ public class AnnotationFoldingStructureProvider
 							isInline[i] = true;
 						}
 					}
-
+					
 					int aStart = 0;
 					int aEnd = 0;
-					int firstInlineAnnotation = 0;
-					int lastInlineAnnotation = 0;
-					int[] annotationGrouping;
-					
+					int lastInlineIndex = 0;
+							
 					// block annotations
 					for (int i = 0; i < isInline.length; i++) {
 						if (!isInline[i]) {
-							aStart = document.getLineOffset(document.getLineOfOffset(rangeOfAnnotation[i].getOffset()));
-			
-							aEnd = getEndOffset(document, i);
-								
-							annotationGrouping = new int[] { i };
-							regions.add(new AnnotationRegion(aStart, aEnd - aStart, false, annotationGrouping));
+							aStart = rangeOfAnnotation[i].getOffset();
+							aEnd = aStart + rangeOfAnnotation[i].getLength()-1;		
+							regions.add(new AnnotationRegion(aStart, aEnd - aStart, false));
 							numberOfAnnotationRanges++;
 							
 							// in-line annotations
 						} else {
 							boolean inlineGroup = false;
-							firstInlineAnnotation = i;
-							aStart = document.getLineOffset(document.getLineOfOffset(rangeOfAnnotation[i].getOffset()));
+							aStart = rangeOfAnnotation[i].getOffset();
 							while (i + 1 < isInline.length && isInline[i + 1]) {
 								inlineGroup = true;
 								i++;
-								lastInlineAnnotation = i;
+								lastInlineIndex = i;
 							}
-							aEnd = getEndOffset(document, lastInlineAnnotation);
+							aEnd = getEndOffset(rangeOfAnnotation[lastInlineIndex]);
 							
 							if (inlineGroup) {
-								annotationGrouping = new int[] { firstInlineAnnotation, lastInlineAnnotation };
-								regions.add(new AnnotationRegion(aStart, aEnd - aStart, true, annotationGrouping));
+								regions.add(new AnnotationRegion(aStart, aEnd - aStart, true));
 								numberOfAnnotationRanges++;
 							}
 						}
@@ -1721,7 +1655,7 @@ public class AnnotationFoldingStructureProvider
 				regions.add(new Region(memberStart, memberEnd - memberStart - 2));
 
 			} else {
-				// member without multiple line annotations
+				// member without annotation folding range
 				regions.add(new Region(start, shift + range.getLength() - start));
 
 			}
@@ -1733,24 +1667,12 @@ public class AnnotationFoldingStructureProvider
 
 		return new IRegion[0];
 	}
-
-	/*
-	 * Calculates the annotation range's end offset from the following element -- either an annotation or the member.
-	 */
-	private int getEndOffset(IDocument document, int i) throws BadLocationException, JavaModelException {
-		int end = -1;
-		// next element is another annotation
-		if (annotations.length > i + 1) {
-			end = document.getLineOffset(
-					document.getLineOfOffset(rangeOfAnnotation[i+1].getOffset())) - 1;
-			// next element is member
-		} else {
-			end = document.getLineOffset(
-					document.getLineOfOffset(currentMember.getNameRange().getOffset())) - 1;
-		}
-
-		return end;
+	
+	private int getEndOffset(ISourceRange range) {
+		return range.getOffset() + range.getLength();
 	}
+
+
 
 	private boolean isLongAnnotation() {
 		return IntStream.of(lineLengthOfAnnotation).sum() > 1;
@@ -1877,7 +1799,7 @@ public class AnnotationFoldingStructureProvider
 
 	protected final Position createAnnotationBlockPosition(AnnotationRegion aligned, IMember member, boolean foldAll,
 			FoldingStructureComputationContext ctx) {
-		return new AnnotationBlockPosition(aligned.getOffset(), aligned.getLength(), member, foldAll,aligned.annotationGrouping, ctx);
+		return new AnnotationBlockPosition(aligned.getOffset(), aligned.getLength(), member, foldAll, ctx);
 	}
 
 	protected final Position createAnnotationInlinePosition(AnnotationRegion aligned, IMember member, boolean foldAll,
@@ -1922,7 +1844,7 @@ public class AnnotationFoldingStructureProvider
 			
 			if(region instanceof AnnotationRegion) {
 				AnnotationRegion annotationRegion = (AnnotationRegion) region;
-				return new AnnotationRegion(offset, endOffset - offset, annotationRegion.inline, annotationRegion.annotationGrouping);
+				return new AnnotationRegion(offset, endOffset - offset, annotationRegion.inline);
 			}
 
 			return new Region(offset, endOffset - offset);

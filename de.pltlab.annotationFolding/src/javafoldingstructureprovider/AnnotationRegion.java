@@ -8,10 +8,9 @@ public class AnnotationRegion extends Region implements IRegion {
 	public boolean inline;
 	int[] annotationGrouping;
 
-	public AnnotationRegion(int offset, int length, boolean inline, int[] annotationGrouping) {
+	public AnnotationRegion(int offset, int length, boolean inline) {
 		super(offset, length);
 		this.inline = inline;
-		this.annotationGrouping = annotationGrouping;
 	}
 
 }
