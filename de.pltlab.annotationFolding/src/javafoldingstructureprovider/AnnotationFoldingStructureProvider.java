@@ -690,48 +690,41 @@ public class AnnotationFoldingStructureProvider
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
 
 			int captionLine = document.getLineOfOffset(offset);
-			int lastLine = document.getLineOfOffset(offset + length);
-			int lastLineEndOffset = document.getLineOffset(lastLine)-1;
+			int lastLine = document.getLineOfOffset(offset + (length - 1));
+			int lastLineEndOffset = document.getLineOffset(lastLine + 1) -1;
 			
 			IScanner scanner = ToolFactory.createScanner(true, false, false, true);
-			System.out.println("BLOCK!!!");
-			
+			scanner.setSource(document.get(offset, length).toCharArray());
+
 			int shift;
 			int argStart;
-			int argEnd;
-			
-			try {
-				
-				scanner.setSource(document.get(offset, length).toCharArray());
 
+			try {
 				// find "(" and ")" token offsets
 				shift = offset;
 				argStart = shift;
-				argEnd = shift;
 				
 				int token = -1;
-				boolean startFound = false;
-				while (token != ITerminalSymbols.TokenNameEOF && startFound == false) {
-					
-						token = scanner.getNextToken();
-					
-					if (!startFound && token == ITerminalSymbols.TokenNameLPAREN) {
+				while (token != ITerminalSymbols.TokenNameEOF) {
+
+					token = scanner.getNextToken();
+
+					if (token == ITerminalSymbols.TokenNameLPAREN) {
 						argStart = shift + scanner.getCurrentTokenEndPosition() + 1;
-						startFound = true;
+						break;
 					}
 				}
-			
-			if (captionLine < lastLine) {
-				int annotationOffset = argStart;//document.getLineOffset(captionLine + 1);
-				int annotationLength = lastLineEndOffset - annotationOffset;
-				if (annotationLength > 0) {
-					IRegion annotationRegion = new Region(annotationOffset, annotationLength);
-					return new IRegion[] { annotationRegion };
-				}
-			}
-			
-			} catch (InvalidInputException e) {
 				
+					int annotationOffset = argStart;
+					int annotationLength = lastLineEndOffset - annotationOffset;
+					if (annotationLength > 0) {
+						IRegion annotationRegion = new Region(annotationOffset, annotationLength);
+						return new IRegion[] { annotationRegion };
+					}
+				
+
+			} catch (InvalidInputException e) {
+
 			}
 			return null;
 		}
@@ -838,24 +831,18 @@ public class AnnotationFoldingStructureProvider
 		 */
 		@Override
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
-
-			ArrayList<String> toHide = new ArrayList<String>();
-			toHide.add(annotationsToHide); // TODO: split() to support multiple
-			IAnnotation[] annotations = null;
+			
 			IRegion[] regions = null;	
 			ArrayList<IRegion> regionsArrayList = new ArrayList<IRegion>();
 			
 			IScanner scanner = ToolFactory.createScanner(true, false, false, true);
-			System.out.println("INLINE!!");
-			
+			scanner.setSource(document.get(offset, length).toCharArray());
+		
 			int shift;
 			int argStart;
 			int argEnd;
 			
 			try {
-				
-				scanner.setSource(document.get(offset, length).toCharArray());
-
 				// find "(" and ")" token offsets
 				shift = offset;
 				argStart = shift;
@@ -1043,6 +1030,7 @@ public class AnnotationFoldingStructureProvider
 	private boolean complexAnnotationFolding = true;
 
 	private int numberOfAnnotationRanges = 0;
+	private int annotationFoldingMinLineNumbers = 1;
 	private IJavaElement javaElement;
 	private IMember currentMember;
 
@@ -1231,7 +1219,17 @@ public class AnnotationFoldingStructureProvider
 		complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
 		fCollapseAnnotations = scopedPreferenceStore.getBoolean("INITIAL_FOLD");
 
+		int userMinLines = 1;
+		try {
+			userMinLines = Integer.valueOf(scopedPreferenceStore.getString("MIN_LINES"));
+		} catch (NumberFormatException e) {
+
+		}
+		if (userMinLines == (int) userMinLines && userMinLines > 0 && userMinLines < 5) {
+			annotationFoldingMinLineNumbers = userMinLines;
+		}
 	}
+	
 
 	private void update(FoldingStructureComputationContext ctx) {
 		if (ctx == null)
@@ -1605,30 +1603,30 @@ public class AnnotationFoldingStructureProvider
 				break;
 			}
 			// java annotation ranges
-			if (isAnnotated && isLongAnnotation()) {		
+			if (isAnnotated && isLongAnnotation() && complexAnnotationFolding) {
+
 				IDocument document = ctx.getDocument();
-				if (complexAnnotationFolding) {
-					Boolean[] isInline = new Boolean[annotations.length];
-					for (int i = 0; i < lineLengthOfAnnotation.length; i++) {
-						if (lineLengthOfAnnotation[i] > 1) {
-							isInline[i] = false;
-						} else {
-							isInline[i] = true;
-						}
+				Boolean[] isInline = new Boolean[annotations.length];
+				
+				int aStart = 0;
+				int aEnd = 0;
+				int lastInlineIndex = 0;
+				
+				for (int i = 0; i < lineLengthOfAnnotation.length; i++) {
+					if (lineLengthOfAnnotation[i] > 1) {
+						isInline[i] = false;
+					} else {
+						isInline[i] = true;
 					}
-					
-					int aStart = 0;
-					int aEnd = 0;
-					int lastInlineIndex = 0;
-							
+				}					
 					// block annotations
 					for (int i = 0; i < isInline.length; i++) {
 						if (!isInline[i]) {
 							aStart = rangeOfAnnotation[i].getOffset();
-							aEnd = aStart + rangeOfAnnotation[i].getLength()-1;		
+							aEnd = aStart + rangeOfAnnotation[i].getLength();		
 							regions.add(new AnnotationRegion(aStart, aEnd - aStart, false));
 							numberOfAnnotationRanges++;
-							
+
 							// in-line annotations
 						} else {
 							boolean inlineGroup = false;
@@ -1639,14 +1637,13 @@ public class AnnotationFoldingStructureProvider
 								lastInlineIndex = i;
 							}
 							aEnd = getEndOffset(rangeOfAnnotation[lastInlineIndex]);
-							
+
 							if (inlineGroup) {
 								regions.add(new AnnotationRegion(aStart, aEnd - aStart, true));
 								numberOfAnnotationRanges++;
 							}
 						}
 					}
-				}
 
 				int memberStart = document.getLineOffset(document.getLineOfOffset(currentMember.getNameRange().getOffset()));
 				int memberEnd =  currentMember.getSourceRange().getOffset() + currentMember.getSourceRange().getLength();
@@ -1675,7 +1672,7 @@ public class AnnotationFoldingStructureProvider
 
 
 	private boolean isLongAnnotation() {
-		return IntStream.of(lineLengthOfAnnotation).sum() > 1;
+		return IntStream.of(lineLengthOfAnnotation).sum() > annotationFoldingMinLineNumbers;
 	}
 	
 

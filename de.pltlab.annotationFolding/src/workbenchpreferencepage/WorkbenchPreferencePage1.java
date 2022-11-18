@@ -26,6 +26,8 @@ public class WorkbenchPreferencePage1 extends FieldEditorPreferencePage implemen
        // addField(new RadioGroupFieldEditor("CHOICE", "A &multiple-choice preference", 1,
        //         new String[][] { { "&Fold Arguments", "choice1" }, { "&Hide Selected Annotations", "choice2" } }, getFieldEditorParent()));
         addField(new StringFieldEditor("TO_HIDE", "Annotations &to hide:", getFieldEditorParent()));
+        
+        addField(new StringFieldEditor("MIN_LINES", "Fold Annotations Longer than &Lines:", getFieldEditorParent()));
        
     }
 
