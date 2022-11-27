@@ -1325,7 +1325,6 @@ public class AnnotationFoldingStructureProvider
 				return;
 
 			ctx.getScanner().setSource(source.toCharArray());
-
 			computeFoldingStructure(parent.getChildren(), ctx);
 		} catch (JavaModelException x) {
 		}
@@ -1336,7 +1335,6 @@ public class AnnotationFoldingStructureProvider
 			throws JavaModelException {
 
 		for (IJavaElement element : elements) {
-
 			if (element instanceof IMethod) {
 				IAnnotatable method = (IAnnotatable) element;
 				IAnnotation[] annotations = method.getAnnotations();

@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -234,8 +235,24 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			 * @return <code>true</code> if annotations should be collapsed
 			 */
 			public boolean collapseAnnotations() {
+				if(annotationStrategy == annotationStrategy.BASIC) {
+					return false;
+				}
 				return fAllowCollapsing && fCollapseAnnotations;
 			}
+			
+			public boolean getAnnotationFoldingStrategy() {
+				if(annotationStrategy == annotationStrategy.BASIC) {
+					return false;
+				}
+				return fAllowCollapsing && fCollapseAnnotations;
+			}
+		}
+		
+		public enum RegionType {
+		    COMMENT,
+		    ANNOTATION, 
+		    MEMBER; 
 		}
 		
 
@@ -246,6 +263,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 
 			private IJavaElement fJavaElement;
 			private boolean fIsComment;
+			private RegionType fRegionType;
 
 			/**
 			 * Creates a new projection annotation.
@@ -256,10 +274,11 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			 * @param isComment <code>true</code> for a foldable comment, <code>false</code> for a
 			 *        foldable code element
 			 */
-			public JavaProjectionAnnotation(boolean isCollapsed, IJavaElement element, boolean isComment) {
+			public JavaProjectionAnnotation(boolean isCollapsed, IJavaElement element, boolean isComment, RegionType regionType) {
 				super(isCollapsed);
 				fJavaElement= element;
-				fIsComment= isComment;
+				fIsComment = isComment;
+				fRegionType= regionType;
 			}
 
 			IJavaElement getElement() {
@@ -272,6 +291,11 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 
 			boolean isComment() {
 				return fIsComment;
+			}
+			
+			
+			public String getRegionType() {
+				return this.fRegionType.toString();
 			}
 
 			void setIsComment(boolean isComment) {
@@ -674,11 +698,14 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 
 			private IMember fMember;
 			
+			
 			public AnnotationBlockPosition(int offset, int length, IMember member) {
 				super(offset, length);
 				Assert.isNotNull(member);
 				fMember = member;
 			}
+			
+			
 
 			/*
 			 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
@@ -689,6 +716,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 
 				int captionLine = document.getLineOfOffset(offset);
 				int lastLine = document.getLineOfOffset(offset + length);
+				
 
 				if (captionLine < lastLine) {
 					int annotationOffset = document.getLineOffset(captionLine + 1);
@@ -766,6 +794,11 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 				handleProjectionDisabled();
 			}
 		}
+		
+		private enum AnnotationStrategy {
+		    BASIC,
+		    LONG_ANNOTATIONS, 
+		}
 
 		/* context and listeners */
 		private JavaEditor fEditor;
@@ -783,7 +816,8 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		
 		
 		/* annotation folding variables */
-		private Boolean performAnnotationFolding;
+		private Boolean elementIsAnnotatable;
+		private AnnotationStrategy annotationStrategy = AnnotationStrategy.BASIC; 
 		IAnnotation[] annotations = new IAnnotation[0];
 		private int[] lineLengthOfAnnotation;
 		private int[] lengthOfAnnotation;
@@ -961,13 +995,22 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			fCollapseImportContainer= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_IMPORTS);
 			fCollapseJavadoc= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_JAVADOC);
 			fCollapseMembers= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_METHODS);
-			fCollapseHeaderComments= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_HEADERS);
+			fCollapseHeaderComments = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_HEADERS);
+			
+			// get folding strategy setting
+			if (store.getBoolean("BASIC")) {
+				annotationStrategy = AnnotationStrategy.BASIC;
+			} else {
+				annotationStrategy = AnnotationStrategy.LONG_ANNOTATIONS;
+			}
 			
 			ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 					"de.pltlab.annotationFolding");
 			//complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
 			fCollapseAnnotations = scopedPreferenceStore.getBoolean("INITIAL_FOLD");
 		}
+		
+		
 
 		private void update(FoldingStructureComputationContext ctx) {
 			if (ctx == null)
@@ -985,7 +1028,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			while (e.hasNext()) {
 				JavaProjectionAnnotation newAnnotation= e.next();
 				Position newPosition= newStructure.get(newAnnotation);
-
+				
 				IJavaElement element= newAnnotation.getElement();
 				/*
 				 * See https://bugs.eclipse.org/bugs/show_bug.cgi?id=130472 and
@@ -1008,7 +1051,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 						Tuple tuple= x.next();
 						JavaProjectionAnnotation existingAnnotation= tuple.annotation;
 						Position existingPosition= tuple.position;
-						if (newAnnotation.isComment() == existingAnnotation.isComment()) {
+						if (newAnnotation.getRegionType() == existingAnnotation.getRegionType()) {
 							boolean updateCollapsedState= ctx.allowCollapsing() && existingAnnotation.isCollapsed() != newAnnotation.isCollapsed();
 							if (!isMalformedAnonymousType && existingPosition != null && (!newPosition.equals(existingPosition) || updateCollapsedState)) {
 								existingPosition.setOffset(newPosition.getOffset());
@@ -1099,7 +1142,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 
 			boolean collapse= false;
 			boolean collapseCode= true;
-			performAnnotationFolding = false;
+			elementIsAnnotatable = false;
 			
 			switch (element.getElementType()) {
 
@@ -1125,9 +1168,9 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 					annotations = member.getAnnotations();
 					collectAnnotationInformation(annotations);
 
-					if (containsLongAnnotation()) {
-						performAnnotationFolding = true;
-					}
+				//	if (containsLongAnnotation()) {
+						elementIsAnnotatable = true;
+			//		}
 
 				} catch (JavaModelException e) {
 				}
@@ -1148,7 +1191,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 							} else {
 								commentCollapse = ctx.collapseJavadoc();
 							}
-							ctx.addProjectionRange(new JavaProjectionAnnotation(commentCollapse, element, true),
+							ctx.addProjectionRange(new JavaProjectionAnnotation(commentCollapse, element, true, RegionType.COMMENT),
 									position);
 						}
 					}
@@ -1157,14 +1200,19 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 				if (numberOfAnnotationRanges > 0) {
 					for (int i = regions.length - (numberOfAnnotationRanges + 1); i < regions.length - 1; i++) {
 						Position position = null;
+						boolean initiallyCollapseAnnotations = false;
+						
 						IRegion normalized =  alignRegion(regions[i], ctx);
 						if (normalized != null) {
-							position = createAnnotationBlockPosition(normalized, (IMember) element, false, ctx);
+							if(annotationStrategy == annotationStrategy.LONG_ANNOTATIONS) {
+								initiallyCollapseAnnotations = true;
+							}
+							position = createAnnotationBlockPosition(normalized, (IMember) element, ctx);
 						}
 						if (position != null) {
-							boolean annotationCollapse;
-							annotationCollapse = ctx.collapseAnnotations();
-							ctx.addProjectionRange(new JavaProjectionAnnotation(annotationCollapse, element, true),
+							
+							initiallyCollapseAnnotations = ctx.collapseAnnotations();
+							ctx.addProjectionRange(new JavaProjectionAnnotation(initiallyCollapseAnnotations, element, false, RegionType.ANNOTATION),
 									position);
 						}
 						}
@@ -1176,7 +1224,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 					if (normalized != null) {
 						Position position= element instanceof IMember ? createMemberPosition(normalized, (IMember) element) : createCommentPosition(normalized);
 						if (position != null)
-							ctx.addProjectionRange(new JavaProjectionAnnotation(collapse, element, false), position);
+							ctx.addProjectionRange(new JavaProjectionAnnotation(collapse, element, false, RegionType.MEMBER), position);
 					}
 				}
 			}
@@ -1222,6 +1270,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		 * @param ctx the folding context
 		 * @return the regions to be folded
 		 */
+		@SuppressWarnings("unused")
 		protected final IRegion[] computeProjectionRanges(ISourceReference reference, FoldingStructureComputationContext ctx) {
 		
 			try {
@@ -1274,34 +1323,27 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 						break;
 					}
 
-					if (performAnnotationFolding) {
+					if (elementIsAnnotatable) {
+
 						document = ctx.getDocument();
-						for (int i = 0; i < annotations.length; i++) {
-							if (lineLengthOfAnnotation[i] > 1) {
-								regions.add(
-										new Region(rangeOfAnnotation[i].getOffset(), rangeOfAnnotation[i].getLength()));
-								numberOfAnnotationRanges++;
-								if(i < annotations.length-1) {
-									annotationStart = rangeOfAnnotation[i+1].getOffset();
-								}
-							}
-						}
-				
-						 memberStart = document
+						memberStart = document
 								.getLineOffset(document.getLineOfOffset(reference.getNameRange().getOffset()));
-						 memberEnd = reference.getSourceRange().getOffset()
+						memberEnd = reference.getSourceRange().getOffset()
 								+ reference.getSourceRange().getLength();
-						 
-						 if(annotationStart != -1 && annotationStart < memberStart) {
-							 memberStart = annotationStart;
-						 }
-							 
-					// member region below annotation folding block
-					regions.add(new Region(memberStart, memberEnd - memberStart));
-						
-					} else {
-						// member region without separate annotation folding
-						regions.add(new Region(start, shift + range.getLength() - start));
+
+						if (annotationStrategy == AnnotationStrategy.LONG_ANNOTATIONS && containsLongAnnotation()) {
+
+							longAnnotationFolding(regions, memberStart, memberEnd);
+
+						} else if (annotationStrategy == AnnotationStrategy.BASIC && annotationsSpanMultiplelines()) {
+							simpleAnnotationFolding(regions, memberStart, memberEnd, annotationStart, start);
+
+						}
+						if (numberOfAnnotationRanges == 0) {
+							// member region without separate annotation folding
+							regions.add(new Region(start, shift + range.getLength() - start));
+						}
+
 					}
 
 					IRegion[] result= new IRegion[regions.size()];
@@ -1311,6 +1353,40 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			}
 
 			return new IRegion[0];
+		}
+
+		private void simpleAnnotationFolding(List<IRegion> regions, int memberStart, int memberEnd, int annotationStart,
+				int start) {
+			if (annotationStart != -1 && annotationStart < memberStart) {
+				memberStart = annotationStart;
+			}
+			if(start != memberStart ) {
+				regions.add(new Region(start, memberStart - start-1));
+				numberOfAnnotationRanges++;
+			}
+
+			// member region below annotation folding block
+			regions.add(new Region(memberStart, memberEnd - memberStart));
+		}
+
+		private void longAnnotationFolding(List<IRegion> regions, int memberStart, int memberEnd) {
+			int annotationStart = -1;
+			for (int i = 0; i < annotations.length; i++) {
+				if (lineLengthOfAnnotation[i] > 1) {
+					regions.add(
+							new Region(rangeOfAnnotation[i].getOffset(), rangeOfAnnotation[i].getLength()));
+					numberOfAnnotationRanges++;
+					if (i < annotations.length - 1) {
+						annotationStart = rangeOfAnnotation[i + 1].getOffset();
+					}
+				}
+			}
+			// fold single-line annotations above member the standard way:
+			if (annotationStart != -1) {
+				memberStart = annotationStart;
+			}
+			// member region below annotation folding block
+			regions.add(new Region(memberStart, memberEnd - memberStart));
 		}
 		
 		/**
@@ -1333,6 +1409,13 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 				if(lineLengthOfAnnotation[i]>1) {
 					return true;
 				}
+			}
+			return false;
+		}
+		
+		private boolean annotationsSpanMultiplelines() {
+			if(IntStream.of(lineLengthOfAnnotation).sum() > 1) {
+				return true;
 			}
 			return false;
 		}
@@ -1414,7 +1497,6 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		}
 
 		protected final Position createAnnotationBlockPosition(IRegion aligned, IMember member,
-				boolean foldAll,
 				FoldingStructureComputationContext ctx) {
 			return new AnnotationBlockPosition(aligned.getOffset(), aligned.getLength(), member);
 		}

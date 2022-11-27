@@ -5,11 +5,13 @@
          point="org.eclipse.jdt.ui.foldingStructureProviders">
       <provider
             class="javafoldingstructureprovider.AnnotationFoldingStructureProvider"
-            id="de.pltlab.annotationFolding.AnnotationFoldingStructureProvider">
+            id="de.pltlab.annotationFolding.AnnotationFoldingStructureProvider"
+            preferencesClass="workbenchpreferencepage.AnnotationFoldingPreferenceBlock">
       </provider>
       <provider
             class="javafoldingstructureprovider.BasicAnnotationFoldingStructureProvider"
-            id="de.pltlab.annotationFolding.BasicAnnotationFolding">
+            id="de.pltlab.annotationFolding.BasicAnnotationFolding"
+            preferencesClass="workbenchpreferencepage.AnnotationFoldingPreferenceBlock">
       </provider>
    </extension>
    <extension
