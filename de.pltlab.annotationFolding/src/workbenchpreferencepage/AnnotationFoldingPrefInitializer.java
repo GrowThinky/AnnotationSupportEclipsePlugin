@@ -16,5 +16,8 @@ public class AnnotationFoldingPrefInitializer extends AbstractPreferenceInitiali
         scopedPreferenceStore.setDefault("COMPLEX_ENABLED", "false");
         scopedPreferenceStore.setDefault("INITIAL_FOLD", "false");
     }
+    
+
+    
 
 }

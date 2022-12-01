@@ -46,7 +46,7 @@ class AnnotationFoldingTest {
 
 		if (editor.getPartName().equals("FruitTest.java")) {
 			IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
-			document.set(test1);
+			document.set(folded1);
 			editor.doSave(null);
 			editor.getDocumentProvider().resetDocument(document);
 
@@ -83,7 +83,7 @@ class AnnotationFoldingTest {
 		fail("Testing Window is not Active");
 
 	}
-	String test1 = "package fruits;\n"
+	String folded1 = "package fruits;\n"
 			+ "\n"
 			+ "public class FruitTest {\n"
 			+ "	\n"

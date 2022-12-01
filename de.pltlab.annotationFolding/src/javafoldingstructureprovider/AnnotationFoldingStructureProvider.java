@@ -35,6 +35,9 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.junit.validator.AnnotationsValidator;
+
+import javafoldingstructureprovider.BasicAnnotationFoldingStructureProvider.RegionType;
+
 import org.eclipse.jdt.core.ElementChangedEvent;
 import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.IAnnotation;
@@ -236,6 +239,13 @@ public class AnnotationFoldingStructureProvider
 
 	}
 
+	public enum RegionType {
+	    COMMENT,
+	    ANNOTATION_INLINE, 
+	    ANNOTATION_BLOCK,
+	    MEMBER; 
+	}
+	
 	/**
 	 * A {@link ProjectionAnnotation} for java code.
 	 */
@@ -243,6 +253,7 @@ public class AnnotationFoldingStructureProvider
 
 		private IJavaElement fJavaElement;
 		private boolean fIsComment;
+		private RegionType fRegionType;
 
 		/**
 		 * Creates a new projection annotation.
@@ -253,10 +264,11 @@ public class AnnotationFoldingStructureProvider
 		 * @param isComment   <code>true</code> for a foldable comment,
 		 *                    <code>false</code> for a foldable code element
 		 */
-		public JavaProjectionAnnotation(boolean isCollapsed, IJavaElement element, boolean isComment) {
+		public JavaProjectionAnnotation(boolean isCollapsed, IJavaElement element, boolean isComment, RegionType regionType) {
 			super(isCollapsed);
 			fJavaElement = element;
 			fIsComment = isComment;
+			fRegionType= regionType;
 		}
 
 		IJavaElement getElement() {
@@ -271,6 +283,10 @@ public class AnnotationFoldingStructureProvider
 			return fIsComment;
 		}
 
+		public String getRegionType() {
+			return this.fRegionType.toString();
+		}
+		
 		void setIsComment(boolean isComment) {
 			fIsComment = isComment;
 		}
@@ -826,8 +842,8 @@ public class AnnotationFoldingStructureProvider
 		}
 
 		/*
-		 * @see org.eclipse.jface.text.source.projection.IProjectionPosition#
-		 * computeFoldingRegions(org.eclipse.jface.text.IDocument)
+		 * Computes the actual text regions to be removed from the projection document 
+		 * when a group of single line annotations is collapsed.
 		 */
 		@Override
 		public IRegion[] computeProjectionRegions(IDocument document) throws BadLocationException {
@@ -1214,20 +1230,21 @@ public class AnnotationFoldingStructureProvider
 		fCollapseMembers = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_METHODS);
 		fCollapseHeaderComments = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_HEADERS);
 
-		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-				"de.pltlab.annotationFolding");
-		complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
-		fCollapseAnnotations = scopedPreferenceStore.getBoolean("INITIAL_FOLD");
+//		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
+//				"de.pltlab.annotationFolding");
+//		complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
+		//fCollapseAnnotations = scopedPreferenceStore.getBoolean("INITIAL_FOLD");
+		fCollapseAnnotations = store.getBoolean("INIT_LONG");
 
-		int userMinLines = 1;
-		try {
-			userMinLines = Integer.valueOf(scopedPreferenceStore.getString("MIN_LINES"));
-		} catch (NumberFormatException e) {
-
-		}
-		if (userMinLines == (int) userMinLines && userMinLines > 0 && userMinLines < 5) {
-			annotationFoldingMinLineNumbers = userMinLines;
-		}
+//		int userMinLines = 1;
+//		try {
+//			userMinLines = Integer.valueOf(scopedPreferenceStore.getString("MIN_LINES"));
+//		} catch (NumberFormatException e) {
+//
+//		}
+//		if (userMinLines == (int) userMinLines && userMinLines > 0 && userMinLines < 5) {
+//			annotationFoldingMinLineNumbers = userMinLines;
+//		}
 	}
 	
 
@@ -1271,7 +1288,7 @@ public class AnnotationFoldingStructureProvider
 					Tuple tuple = x.next();
 					JavaProjectionAnnotation existingAnnotation = tuple.annotation;
 					Position existingPosition = tuple.position;
-					if (newAnnotation.isComment() == existingAnnotation.isComment()) {
+					if (newAnnotation.getRegionType() == existingAnnotation.getRegionType()) {
 						boolean updateCollapsedState = ctx.allowCollapsing()
 								&& existingAnnotation.isCollapsed() != newAnnotation.isCollapsed();
 						if (!isMalformedAnonymousType && existingPosition != null
@@ -1430,7 +1447,7 @@ public class AnnotationFoldingStructureProvider
 						} else {
 							commentCollapse = ctx.collapseJavadoc();
 						}
-						ctx.addProjectionRange(new JavaProjectionAnnotation(commentCollapse, element, true), position);
+						ctx.addProjectionRange(new JavaProjectionAnnotation(commentCollapse, element, true, RegionType.COMMENT), position);
 					}
 				}
 			}
@@ -1438,17 +1455,20 @@ public class AnnotationFoldingStructureProvider
 			if (numberOfAnnotationRanges > 0 ) {
 				for (int i = regions.length - (numberOfAnnotationRanges + 1); i < regions.length - 1; i++) {
 					Position position = null;
+					RegionType regionType;
 					AnnotationRegion normalized =  (AnnotationRegion) alignRegion(regions[i], ctx);
 					if (normalized != null) {
 						if (normalized.inline) {
 							annotationInitialCollapse = false;
+							regionType = RegionType.ANNOTATION_INLINE;
 							position = createAnnotationInlinePosition(normalized, (IMember) element, false, ctx);
 						} else {
 							annotationInitialCollapse = ctx.collapseAnnotations();
+							regionType = RegionType.ANNOTATION_BLOCK;
 							position = createAnnotationBlockPosition(normalized, (IMember) element, false, ctx);
 						}
 						if (position != null) {
-							ctx.addProjectionRange(new JavaProjectionAnnotation(annotationInitialCollapse, element, true),
+							ctx.addProjectionRange(new JavaProjectionAnnotation(annotationInitialCollapse, element, true, regionType),
 									position);
 						}
 					}
@@ -1463,7 +1483,7 @@ public class AnnotationFoldingStructureProvider
 					Position position = element instanceof IMember ? createMemberPosition(normalized, (IMember) element)
 							: createCommentPosition(normalized, false);
 					if (position != null)
-						ctx.addProjectionRange(new JavaProjectionAnnotation(collapse, element, false), position);
+						ctx.addProjectionRange(new JavaProjectionAnnotation(collapse, element, false, RegionType.MEMBER), position);
 				}
 			}
 		}
@@ -1482,25 +1502,25 @@ public class AnnotationFoldingStructureProvider
 		}
 	}
 
-	private void addCombinedAnnotationRegion(IJavaElement element, FoldingStructureComputationContext ctx,
-			IRegion[] regions) {
-		boolean foldAll = true; // TODO: clarify logic
-
-		int numberOfNonAnnotationRanges = numberOfAnnotationRanges + 1; // add member's range
-
-		for (int i = regions.length - numberOfNonAnnotationRanges; i < regions.length - 1; i++) {
-			IRegion normalized = alignRegion(regions[i], ctx);
-			if (normalized != null) {
-				Position position = createAnnotationPosition(normalized, (IMember) element, foldAll, ctx);
-				if (position != null) {
-					boolean annotationCollapse;
-					annotationCollapse = ctx.collapseAnnotations();
-					ctx.addProjectionRange(new JavaProjectionAnnotation(annotationCollapse, element, true), position);
-				}
-			}
-			foldAll = false;
-		}
-	}
+//	private void addCombinedAnnotationRegion(IJavaElement element, FoldingStructureComputationContext ctx,
+//			IRegion[] regions) {
+//		boolean foldAll = true; // TODO: clarify logic
+//
+//		int numberOfNonAnnotationRanges = numberOfAnnotationRanges + 1; // add member's range
+//
+//		for (int i = regions.length - numberOfNonAnnotationRanges; i < regions.length - 1; i++) {
+//			IRegion normalized = alignRegion(regions[i], ctx);
+//			if (normalized != null) {
+//				Position position = createBlockAnnotationPosition(normalized, (IMember) element, foldAll, ctx);
+//				if (position != null) {
+//					boolean annotationCollapse;
+//					annotationCollapse = ctx.collapseAnnotations();
+//					ctx.addProjectionRange(new JavaProjectionAnnotation(annotationCollapse, element, true, null), position);
+//				}
+//			}
+//			foldAll = false;
+//		}
+//	}
 
 	/**
 	 * Returns <code>true</code> if <code>type</code> is an anonymous enum
@@ -1787,10 +1807,6 @@ public class AnnotationFoldingStructureProvider
 		return new JavaElementPosition(aligned.getOffset(), aligned.getLength(), member);
 	}
 
-	protected final Position createAnnotationPosition(IRegion aligned, IMember member, boolean foldAll,
-			FoldingStructureComputationContext ctx) {
-		return new AnnotationPosition(aligned.getOffset(), aligned.getLength(), member, foldAll, ctx);
-	}
 
 	protected final Position createAnnotationBlockPosition(AnnotationRegion aligned, IMember member, boolean foldAll,
 			FoldingStructureComputationContext ctx) {

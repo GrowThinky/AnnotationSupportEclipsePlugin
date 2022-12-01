@@ -29,12 +29,9 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.internal.ui.*;
 
 // org.eclipse.jdt.ui.text.folding.IJavaFoldingPreferenceBlock
-public class AnnotationFoldingPreferenceBlock implements IJavaFoldingPreferenceBlock{
+public class ExperimentalAnnotationPreferenceBlock implements IJavaFoldingPreferenceBlock{
 	
 	private IPreferenceStore fStore;
-	private ScopedPreferenceStore fScopedStore;
-//	private OverlayPreferenceStore fOverlayStore;
-//	private OverlayKey[] fKeys;
 	private Map<Button, String> fCheckBoxes= new HashMap<>();
 	private SelectionListener fCheckBoxListener= new SelectionListener() {
 		@Override
@@ -49,35 +46,13 @@ public class AnnotationFoldingPreferenceBlock implements IJavaFoldingPreferenceB
 
 
 	@SuppressWarnings("restriction")
-	public AnnotationFoldingPreferenceBlock() {
+	public ExperimentalAnnotationPreferenceBlock() {
 		fStore= JavaPlugin.getDefault().getPreferenceStore();
-		fScopedStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-				"de.pltlab.annotationFolding");
-		
-		//fKeys= createKeys();
-		//fOverlayStore= new OverlayPreferenceStore(fStore, fKeys);
 	}
 
-	/*
-	@SuppressWarnings("restriction")
-	private OverlayKey[] createKeys() {
-		ArrayList<OverlayKey> overlayKeys= new ArrayList<>();
 
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, PreferenceConstants.EDITOR_FOLDING_JAVADOC));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, PreferenceConstants.EDITOR_FOLDING_INNERTYPES));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, PreferenceConstants.EDITOR_FOLDING_METHODS));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, PreferenceConstants.EDITOR_FOLDING_IMPORTS));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, PreferenceConstants.EDITOR_FOLDING_HEADERS));
-
-		return overlayKeys.toArray(new OverlayKey[overlayKeys.size()]);
-		
-	}
-	
-*/
 	@Override
 	public Control createControl(Composite composite) {
-	//	fOverlayStore.load();
-	//	fOverlayStore.start();
 
 		Composite inner= new Composite(composite, SWT.NONE);
 		GridLayout layout= new GridLayout(1, true);
@@ -99,9 +74,14 @@ public class AnnotationFoldingPreferenceBlock implements IJavaFoldingPreferenceB
 		label2.setText("AnnotationFolding:");
 		
 		
-		addCheckBox(inner, "Use single folding range ", "BASIC", 0);
+		addCheckBox(inner, "Initially fold multi-line annotation ranges ", "INIT_LONG", 0);
 		
 		
+		Label label3= new Label(inner, SWT.LEFT);
+		label3.setText(
+				System.lineSeparator() +
+						"This structure provider will only work if all toLineStart() calls in ProjectionViewer's "
+						+ System.lineSeparator()+ "add/removeMasterDocumentRange() methods are commented out.");
 		
 		initializeFields();
 

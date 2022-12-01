@@ -6,12 +6,12 @@
       <provider
             class="javafoldingstructureprovider.AnnotationFoldingStructureProvider"
             id="de.pltlab.annotationFolding.AnnotationFoldingStructureProvider"
-            preferencesClass="workbenchpreferencepage.AnnotationFoldingPreferenceBlock">
+            preferencesClass="workbenchpreferencepage.ExperimentalAnnotationPreferenceBlock">
       </provider>
       <provider
             class="javafoldingstructureprovider.BasicAnnotationFoldingStructureProvider"
             id="de.pltlab.annotationFolding.BasicAnnotationFolding"
-            preferencesClass="workbenchpreferencepage.AnnotationFoldingPreferenceBlock">
+            preferencesClass="workbenchpreferencepage.BasicAnnotationFoldingPreferenceBlock">
       </provider>
    </extension>
    <extension
