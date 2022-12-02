@@ -87,7 +87,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
  * @since 3.2 (API)
  */
 @SuppressWarnings({ "restriction", "unused" })
-public class AnnotationFoldingStructureProvider
+public class ExperimentalAnnotationFoldingStructureProvider
 		implements IJavaFoldingStructureProvider, IJavaFoldingStructureProviderExtension {
 	/**
 	 * A context that contains the information needed to compute the folding
@@ -1074,7 +1074,7 @@ public class AnnotationFoldingStructureProvider
 	 * The projection state may be reset by calling {@link #initialize()}.
 	 * </p>
 	 */
-	public AnnotationFoldingStructureProvider() {
+	public ExperimentalAnnotationFoldingStructureProvider() {
 	}
 
 	/**

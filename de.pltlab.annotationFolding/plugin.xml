@@ -4,7 +4,7 @@
    <extension
          point="org.eclipse.jdt.ui.foldingStructureProviders">
       <provider
-            class="javafoldingstructureprovider.AnnotationFoldingStructureProvider"
+            class="javafoldingstructureprovider.ExperimentalAnnotationFoldingStructureProvider"
             id="de.pltlab.annotationFolding.AnnotationFoldingStructureProvider"
             preferencesClass="workbenchpreferencepage.ExperimentalAnnotationPreferenceBlock">
       </provider>
