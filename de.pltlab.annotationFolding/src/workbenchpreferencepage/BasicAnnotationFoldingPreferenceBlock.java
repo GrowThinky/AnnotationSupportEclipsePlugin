@@ -73,15 +73,23 @@ public class BasicAnnotationFoldingPreferenceBlock implements IJavaFoldingPrefer
 		Label label2= new Label(inner, SWT.LEFT);
 		label2.setText("AnnotationFolding:");
 		
+		addCheckBox(inner, "Use single range folding strategy", "SINGLE_RANGE", 0);
 		
-		addCheckBox(inner, "Use single range folding strategy", "BASIC", 0);
+		addCheckBox(inner, "Initially fold annotation ranges ", "INIT_LONG_BASIC", 0);
 		
 		Label label3= new Label(inner, SWT.LEFT);
 		label3.setText(System.lineSeparator() +
-				"Single folding range strategy allows to fold all of a member's annotations at once, "
+				"Single range strategy allows to fold all of a member's annotations at once, "
 				+ System.lineSeparator() + "given they span at least two lines. "
-				+ "If disabled, long annotation strategy will be used, which creates " + System.lineSeparator()
-				+ "folding ranges only for individual annotations spanning more than a single line.");
+				+ "If disabled, long annotation strategy will be used," + System.lineSeparator()  
+				+ "which creates folding ranges for individual annotations spanning more than a single line.");
+		
+	
+		Label label4= new Label(inner, SWT.LEFT);
+		
+		label4.setText(System.lineSeparator() +
+				"Java files need to be re-opened for changes to take effect.");
+		
 		
 		
 		initializeFields();

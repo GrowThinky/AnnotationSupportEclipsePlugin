@@ -874,9 +874,9 @@ public class AnnotationFoldingStructureProvider
 					}
 					if (startFound && token == ITerminalSymbols.TokenNameRPAREN) {
 						argEnd = shift + scanner.getCurrentTokenEndPosition();
-						regionsArrayList.add(new Region(argStart, argEnd - argStart ));    // +1 to hide closing
-				//		regionsArrayList.add(new Region(argEnd+1, 1));					  //TODO: adding the region for the newlineRange causes problems with line numbers and document's char-index to line mapping										
+						regionsArrayList.add(new Region(argStart, argEnd - argStart ));  
 						startFound = false;
+				//		regionsArrayList.add(new Region(argEnd+1, 1));					  //TODO: adding the region for the newlineRange causes problems with line numbers and document's char-index to line mapping										
 					}
 				}
 
@@ -1229,12 +1229,12 @@ public class AnnotationFoldingStructureProvider
 		fCollapseJavadoc = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_JAVADOC);
 		fCollapseMembers = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_METHODS);
 		fCollapseHeaderComments = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_HEADERS);
-
+		fCollapseAnnotations = store.getBoolean("INIT_LONG");
 //		ScopedPreferenceStore scopedPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 //				"de.pltlab.annotationFolding");
 //		complexAnnotationFolding = scopedPreferenceStore.getBoolean("COMPLEX_ENABLED");
 		//fCollapseAnnotations = scopedPreferenceStore.getBoolean("INITIAL_FOLD");
-		fCollapseAnnotations = store.getBoolean("INIT_LONG");
+		
 
 //		int userMinLines = 1;
 //		try {
@@ -1637,8 +1637,8 @@ public class AnnotationFoldingStructureProvider
 						isInline[i] = true;
 					}
 				}					
-					// block annotations
 					for (int i = 0; i < isInline.length; i++) {
+						// block annotations:
 						if (!isInline[i]) {
 							aStart = rangeOfAnnotation[i].getOffset();
 							aEnd = aStart + rangeOfAnnotation[i].getLength();		

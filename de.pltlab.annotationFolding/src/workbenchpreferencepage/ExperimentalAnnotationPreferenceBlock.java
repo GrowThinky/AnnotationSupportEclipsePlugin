@@ -83,6 +83,11 @@ public class ExperimentalAnnotationPreferenceBlock implements IJavaFoldingPrefer
 						"This structure provider will only work if all toLineStart() calls in ProjectionViewer's "
 						+ System.lineSeparator()+ "add/removeMasterDocumentRange() methods are commented out.");
 		
+		Label label4= new Label(inner, SWT.LEFT);
+		
+		label4.setText(System.lineSeparator() +
+				"Java files need to be re-opened for changes to take effect.");
+		
 		initializeFields();
 
 		return inner;

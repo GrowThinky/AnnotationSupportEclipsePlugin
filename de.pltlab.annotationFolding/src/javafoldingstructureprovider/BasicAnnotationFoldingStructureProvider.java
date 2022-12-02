@@ -235,18 +235,18 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			 * @return <code>true</code> if annotations should be collapsed
 			 */
 			public boolean collapseAnnotations() {
-				if(annotationStrategy == annotationStrategy.BASIC) {
-					return false;
+				if(annotationStrategy == annotationStrategy.SINGLE_RANGE) {
+					return fAllowCollapsing && fCollapseAnnotations;
 				}
 				return fAllowCollapsing && fCollapseAnnotations;
 			}
 			
-			public boolean getAnnotationFoldingStrategy() {
-				if(annotationStrategy == annotationStrategy.BASIC) {
-					return false;
-				}
-				return fAllowCollapsing && fCollapseAnnotations;
-			}
+//			public boolean getAnnotationFoldingStrategy() {
+//				if(annotationStrategy == annotationStrategy.BASIC) {
+//					return false;
+//				}
+//				return fAllowCollapsing && fCollapseAnnotations;
+//			}
 		}
 		
 		/*
@@ -799,7 +799,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		}
 		
 		private enum AnnotationStrategy {
-		    BASIC,
+		    SINGLE_RANGE,
 		    LONG_ANNOTATIONS, 
 		}
 
@@ -819,11 +819,11 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		
 		
 		/* annotation folding variables */
-		private Boolean elementIsAnnotatable;
-		private AnnotationStrategy annotationStrategy = AnnotationStrategy.BASIC; 
+		private Boolean elementIsAnnotated;
+		private AnnotationStrategy annotationStrategy = AnnotationStrategy.SINGLE_RANGE; 
 		IAnnotation[] annotations = new IAnnotation[0];
-		private int[] lineLengthOfAnnotation;
-		private int[] lengthOfAnnotation;
+		private int[] lineCountOfAnnotation;
+		
 		private ISourceRange[] rangeOfAnnotation;
 		private int numberOfAnnotationRanges;
 
@@ -999,10 +999,12 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			fCollapseJavadoc= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_JAVADOC);
 			fCollapseMembers= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_METHODS);
 			fCollapseHeaderComments = store.getBoolean(PreferenceConstants.EDITOR_FOLDING_HEADERS);
+			// get initial folding setting for long annotations:
+			fCollapseAnnotations = store.getBoolean("INIT_LONG_BASIC");
 			
 			// get folding strategy setting
-			if (store.getBoolean("BASIC")) {
-				annotationStrategy = AnnotationStrategy.BASIC;
+			if (store.getBoolean("SINGLE_RANGE")) {
+				annotationStrategy = AnnotationStrategy.SINGLE_RANGE;
 			} else {
 				annotationStrategy = AnnotationStrategy.LONG_ANNOTATIONS;
 			}
@@ -1146,7 +1148,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 
 			boolean collapse= false;
 			boolean collapseCode= true;
-			elementIsAnnotatable = false;
+			elementIsAnnotated = false;
 			
 			switch (element.getElementType()) {
 
@@ -1165,14 +1167,16 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 				default:
 					return;
 			}
-
+			// detect annotated java elements:
 			if (element instanceof IAnnotatable) {
 				try {
 					IAnnotatable member = (IAnnotatable) element;
 					annotations = member.getAnnotations();
-					collectAnnotationInformation(annotations);
-					elementIsAnnotatable = true;
-
+					if (annotations.length > 0) {
+						elementIsAnnotated = true;
+						collectAnnotationInformation(annotations);
+					}
+					
 				} catch (JavaModelException e) {
 				}
 			}
@@ -1201,19 +1205,17 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 				if (numberOfAnnotationRanges > 0) {
 					for (int i = regions.length - (numberOfAnnotationRanges + 1); i < regions.length - 1; i++) {
 						Position position = null;
-						boolean initiallyCollapseAnnotations = false;
+						boolean initiallyCollapse = ctx.collapseAnnotations();
 						IRegion normalized = alignRegion(regions[i], ctx);
+						
 						if (normalized != null) {
-							if (annotationStrategy == annotationStrategy.LONG_ANNOTATIONS) {
-								initiallyCollapseAnnotations = true;
-							}
-							position = createAnnotationBlockPosition(normalized, (IMember) element, ctx);
+							position = createAnnotationBlockPosition(
+									normalized, (IMember) element, ctx);
 						}
 						if (position != null) {
-							initiallyCollapseAnnotations = ctx.collapseAnnotations();
 							ctx.addProjectionRange(
-									new JavaProjectionAnnotation(initiallyCollapseAnnotations, element, false, RegionType.ANNOTATION),
-									position);
+									new JavaProjectionAnnotation(
+											initiallyCollapse,element,false, RegionType.ANNOTATION),position);
 						}
 					}
 				}
@@ -1322,7 +1324,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 						break;
 					}
 
-					if (elementIsAnnotatable) {
+					if (elementIsAnnotated) {
 						document = ctx.getDocument();
 						memberStart = document
 								.getLineOffset(document.getLineOfOffset(reference.getNameRange().getOffset()));
@@ -1330,16 +1332,18 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 								+ reference.getSourceRange().getLength();
 
 						if (annotationStrategy == AnnotationStrategy.LONG_ANNOTATIONS && containsLongAnnotation()) {
+							
 							longAnnotationStrategy(regions, memberStart, memberEnd);
 
-						} else if (annotationStrategy == AnnotationStrategy.BASIC && annotationsSpanMultiplelines()) {
+						} else if (annotationStrategy == AnnotationStrategy.SINGLE_RANGE && annotationsSpanMultiplelines()) {
+							
 							singleRangeStrategy(regions, memberStart, memberEnd, start);
 						}
-						if (numberOfAnnotationRanges == 0) {
-							// member region without separate annotation folding
-							regions.add(new Region(start, shift + range.getLength() - start));
-						}
-
+					}
+					
+					if ( !elementIsAnnotated || numberOfAnnotationRanges == 0) {
+						// member region without separate annotation folding:
+						regions.add(new Region(start, shift + range.getLength() - start));
 					}
 
 					IRegion[] result= new IRegion[regions.size()];
@@ -1352,9 +1356,16 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		}
 
 	
+		
+		
+		/**
+		 * Adds a single range covering all of the Java element's annotations and a region 
+		 * covering to the member to the regions list
+		 */
 		private void singleRangeStrategy(List<IRegion> regions, int memberStart, int memberEnd, int start) {
 			if(start != memberStart ) {
-				int endOffSet = rangeOfAnnotation[rangeOfAnnotation.length-1].getOffset() + lengthOfAnnotation[lengthOfAnnotation.length-1];
+				ISourceRange sourceRange = rangeOfAnnotation[rangeOfAnnotation.length-1];
+				int endOffSet = sourceRange.getOffset() + sourceRange.getLength();
 				regions.add(new Region(start, endOffSet - start));
 				numberOfAnnotationRanges++;
 			}
@@ -1363,6 +1374,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		}
 
 		
+		
 		/** Adds ranges for every annotation spanning more than a single line, 
 		 * as well as a range covering the member and any single-line annotations
 		 * directly preceding the member to the regions list.
@@ -1370,7 +1382,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		private void longAnnotationStrategy(List<IRegion> regions, int memberStart, int memberEnd) {
 			int preOffset = -1;	
 			for (int i = 0; i < annotations.length; i++) {
-				if (lineLengthOfAnnotation[i] > 1) {
+				if (lineCountOfAnnotation[i] > 1) {
 					preOffset = -1;
 					regions.add(
 							new Region(rangeOfAnnotation[i].getOffset(), rangeOfAnnotation[i].getLength()));
@@ -1388,17 +1400,15 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 			regions.add(new Region(memberStart, memberEnd - memberStart));
 		}
 		
-		/**
-		 * Collects range information about each of the element's annotations.
-		 * @param annotations annotations of an IAnnotable instance.
+		
+		/** Collects range information about each of the element's annotations.
+		 *  @param annotations annotations of an IAnnotable instance.
 		 */
 		private void collectAnnotationInformation(IAnnotation[] annotations) throws JavaModelException {
-			lineLengthOfAnnotation = new int[annotations.length];
-			lengthOfAnnotation = new int[annotations.length];
+			lineCountOfAnnotation = new int[annotations.length];
 			rangeOfAnnotation = new ISourceRange[annotations.length];
 			for (int i = 0; i < annotations.length; i++) {
-				lineLengthOfAnnotation[i] = (int) annotations[i].getSource().lines().count();
-				lengthOfAnnotation[i] = annotations[i].getSource().length();
+				lineCountOfAnnotation[i] = (int) annotations[i].getSource().lines().count();
 				rangeOfAnnotation[i] = annotations[i].getSourceRange();
 			}
 		}
@@ -1407,8 +1417,8 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		 * Returns true if the currently processed IJavaElement has any annotations which span more than one line. 
 		 */
 		private boolean containsLongAnnotation() {
-			for(int i = 0; i<lineLengthOfAnnotation.length;i++ ) {
-				if(lineLengthOfAnnotation[i]>1) {
+			for(int i = 0; i<lineCountOfAnnotation.length;i++ ) {
+				if(lineCountOfAnnotation[i]>1) {
 					return true;
 				}
 			}
@@ -1419,7 +1429,7 @@ import org.eclipse.jdt.internal.ui.text.DocumentCharacterIterator;
 		 * Returns true if the currently processed IJavaElement's annotations span more than one line in total. . 
 		 */
 		private boolean annotationsSpanMultiplelines() {
-			if(IntStream.of(lineLengthOfAnnotation).sum() > 1) {
+			if(IntStream.of(lineCountOfAnnotation).sum() > 1) {
 				return true;
 			}
 			return false;
