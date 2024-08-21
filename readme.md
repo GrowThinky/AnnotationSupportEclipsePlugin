@@ -3,8 +3,6 @@ AnnotationFolding Eclipse IDE Plug-in
 
 Eclipse plug-in for folding @Annotations in Java Editor.
 
-This is a work in progress. Come back in December 2022 for the complete plugin.
-
 What's here:
 * Basic folding of annotations (similar to method folding)
 * Complex preferences settings:
